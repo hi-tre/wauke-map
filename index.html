@@ -144,13 +144,13 @@ header{
 .act::after{animation-delay:0s}.pot::after{animation-delay:0.85s}.std::after{animation-delay:1.7s}.bam::after{animation-delay:2.5s}
 
 /* ── RIGHT PANEL ── */
-#pr{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:100}
-.vp{display:none;flex:1;flex-direction:column;overflow:hidden}
+#pr{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:100;min-height:0}
+.vp{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0}
 .vp.on{display:flex}
 .ph{padding:12px 13px;border-bottom:1px solid var(--border);background:rgba(0,229,200,0.025);flex-shrink:0}
 .pt{font-family:'Fraunces',serif;font-size:14px;font-weight:200;color:var(--bright);margin-bottom:2px}
 .ps{font-size:9px;color:var(--teal);letter-spacing:0.12em;text-transform:uppercase}
-.pb{flex:1;overflow-y:auto;padding:12px 13px}
+.pb{flex:1;overflow-y:auto;padding:12px 13px;min-height:0}
 .pb::-webkit-scrollbar{width:2px}
 .pb::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
