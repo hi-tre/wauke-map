@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Wauke · Nā Wahi Ulu · Kapa Practitioner Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,400;1,9..144,200;1,9..144,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050d1a;
+  --panel:rgba(5,14,30,0.96);
+  --card:rgba(7,18,40,0.92);
+  --teal:#00e5c8;
+  --pink:#e0418a;
+  --blue:#1ab4ff;
+  --green:#39ff9a;
+  --amber:#ffb830;
+  --bamboo:#7ecb35;
+  --gt:rgba(0,229,200,0.13);
+  --gp:rgba(224,65,138,0.13);
+  --ga:rgba(255,184,48,0.13);
+  --gb:rgba(126,203,53,0.13);
+  --bright:#e8f4ff;
+  --mid:rgba(175,210,240,0.78);
+  --dim:rgba(110,155,200,0.52);
+  --border:rgba(0,229,200,0.13);
+  --border2:rgba(0,229,200,0.36);
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Mono',monospace;color:var(--bright);overflow:hidden}
+#app{display:grid;grid-template-rows:54px 1fr;height:100vh}
+
+/* ── HEADER ── */
+header{
+  background:rgba(3,10,22,0.99);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;z-index:1000;position:relative;
+}
+.h-brand{display:flex;align-items:baseline;gap:10px}
+.h-title{font-family:'Fraunces',serif;font-size:17px;font-weight:200;letter-spacing:0.02em}
+.h-title em{color:var(--teal);font-style:italic}
+.h-tag{font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--dim);padding:2px 7px;border:1px solid var(--border);border-radius:10px}
+.h-tabs{display:flex;gap:2px}
+.tab{padding:5px 13px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;background:transparent;border:1px solid transparent;border-radius:3px;color:var(--dim);cursor:pointer;transition:all 0.2s;font-family:'DM Mono',monospace}
+.tab:hover{color:var(--mid);border-color:var(--border)}
+.tab.active{color:var(--teal);border-color:var(--teal);background:var(--gt)}
+.island-nav{display:flex;gap:5px}
+.ibt{padding:3px 10px;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;transition:all 0.2s;font-family:'DM Mono',monospace}
+.ibt:hover{color:var(--mid);border-color:var(--border2)}
+.ibt.active{color:var(--amber);border-color:var(--amber);background:var(--ga)}
+
+/* ── MAIN GRID ── */
+#main{display:grid;grid-template-columns:245px 1fr 295px;height:calc(100vh - 54px)}
+
+/* ── SIDEBAR LEFT ── */
+#sl{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:100}
+.ss{padding:11px 13px;border-bottom:1px solid var(--border)}
+.sl{font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+.lr{display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer}
+.lr:hover .lt{color:var(--bright)}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0;transition:opacity 0.2s;box-shadow:0 0 5px currentColor}
+.ld.off{opacity:0.15;box-shadow:none}
+.lt{font-size:10px;color:var(--mid);line-height:1.3;transition:color 0.2s}
+.lt small{display:block;font-size:8.5px;color:var(--dim);font-style:italic}
+.ml{flex:1;overflow-y:auto}
+.ml::-webkit-scrollbar{width:2px}
+.ml::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.mi{padding:8px 13px;border-bottom:1px solid rgba(0,229,200,0.05);cursor:pointer;transition:background 0.15s;position:relative}
+.mi:hover{background:var(--gt)}
+.mi.on{background:var(--gt);border-left:2px solid var(--teal);padding-left:11px}
+.mi.on .mn{color:var(--teal)}
+.mn{font-size:11px;color:var(--mid);letter-spacing:0.02em}
+.ms{font-size:9px;color:var(--dim);margin-top:1px}
+.mb{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:7.5px;padding:1px 5px;border-radius:8px;letter-spacing:0.06em;border:1px solid}
+.ba{background:rgba(57,255,154,0.08);color:var(--green);border-color:rgba(57,255,154,0.25)}
+.bp{background:rgba(0,229,200,0.07);color:var(--teal);border-color:rgba(0,229,200,0.22)}
+.bs{background:rgba(224,65,138,0.07);color:var(--pink);border-color:rgba(224,65,138,0.22)}
+
+/* ── MAP ── */
+#mc{position:relative;z-index:1}
+#map{width:100%;height:100%;background:#0d1117}
+.leaflet-container{background:#0d1117!important;font-family:'DM Mono',monospace!important}
+.leaflet-tile-pane{filter:saturate(0.22) brightness(0.35) hue-rotate(195deg) contrast(1.05)}
+/* When CARTO loads, it overrides the OSM tiles so the dark filter is less critical */
+.leaflet-control-zoom{border:1px solid var(--border)!important;background:transparent!important}
+.leaflet-control-zoom a{background:var(--card)!important;color:var(--teal)!important;border-bottom:1px solid var(--border)!important;font-size:15px!important;line-height:26px!important;width:27px!important;height:27px!important}
+.leaflet-control-zoom a:hover{background:var(--gt)!important}
+.leaflet-control-attribution{background:rgba(3,8,18,0.85)!important;color:var(--dim)!important;font-size:7.5px!important}
+.leaflet-popup-content-wrapper{background:rgba(4,12,28,0.98)!important;border:1px solid var(--border2)!important;border-radius:7px!important;box-shadow:0 0 22px rgba(0,229,200,0.18)!important;padding:0!important}
+.leaflet-popup-tip{background:rgba(4,12,28,0.98)!important}
+.leaflet-popup-content{margin:0!important;font-family:'DM Mono',monospace!important}
+.pi{padding:11px 14px}
+.pn{font-family:'Fraunces',serif;font-size:13px;font-weight:200;margin-bottom:2px}
+.pm{font-size:8px;color:var(--dim);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.pr{display:flex;justify-content:space-between;font-size:9.5px;color:var(--dim);padding:2px 0}
+.pv{color:var(--bright)}
+#mc::before{content:'';position:absolute;inset:0;z-index:3;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,200,0.007) 3px,rgba(0,229,200,0.007) 4px)}
+#mc::after{content:'';position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at center,transparent 32%,rgba(3,8,14,0.62) 100%)}
+
+
+.li{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:9px;color:var(--mid);letter-spacing:0.04em}
+.ld2{width:7px;height:7px;border-radius:50%}
+.leaflet-tooltip{background:rgba(3,10,22,0.94)!important;border:1px solid var(--border2)!important;border-radius:4px!important;color:var(--teal)!important;font-family:'DM Mono',monospace!important;font-size:9.5px!important;letter-spacing:0.07em!important;padding:3px 7px!important;box-shadow:none!important}
+.leaflet-tooltip::before{display:none!important}
+
+/* ── MARKERS ── */
+.wm{width:15px;height:15px;border-radius:50%;border:1.5px solid;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer}
+.wm::after{content:'';position:absolute;width:27px;height:27px;border-radius:50%;border:1px solid;animation:mP 2.8s ease-in-out infinite;opacity:0}
+.act{background:rgba(57,255,154,0.12);border-color:#39ff9a}.act::after{border-color:#39ff9a}
+.pot{background:rgba(0,229,200,0.09);border-color:var(--teal)}.pot::after{border-color:var(--teal)}
+.std{background:rgba(224,65,138,0.09);border-color:var(--pink)}.std::after{border-color:var(--pink)}
+.bam{background:rgba(126,203,53,0.12);border-color:var(--bamboo)}.bam::after{border-color:var(--bamboo)}
+@keyframes mP{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(1.65);opacity:0}}
+.wd{width:5px;height:5px;border-radius:50%}
+.act .wd{background:#39ff9a;box-shadow:0 0 5px #39ff9a}
+.pot .wd{background:var(--teal);box-shadow:0 0 4px var(--teal)}
+.std .wd{background:var(--pink);box-shadow:0 0 4px var(--pink)}
+.bam .wd{background:var(--bamboo);box-shadow:0 0 4px var(--bamboo)}
+.act::after{animation-delay:0s}.pot::after{animation-delay:0.85s}.std::after{animation-delay:1.7s}.bam::after{animation-delay:2.5s}
+
+/* ── RIGHT PANEL ── */
+#pr{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:100}
+.vp{display:none;flex:1;flex-direction:column;overflow:hidden}
+.vp.on{display:flex}
+.ph{padding:12px 13px;border-bottom:1px solid var(--border);background:rgba(0,229,200,0.025);flex-shrink:0}
+.pt{font-family:'Fraunces',serif;font-size:14px;font-weight:200;color:var(--bright);margin-bottom:2px}
+.ps{font-size:8px;color:var(--teal);letter-spacing:0.12em;text-transform:uppercase}
+.pb{flex:1;overflow-y:auto;padding:12px 13px}
+.pb::-webkit-scrollbar{width:2px}
+.pb::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* Detail pieces */
+.stag{display:inline-block;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;padding:2px 8px;border-radius:10px;margin-bottom:10px;border:1px solid}
+.eb{margin-bottom:11px}
+.el{font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.et{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;margin-bottom:2px}
+.ef{height:100%;border-radius:2px;transition:width 0.8s cubic-bezier(.4,0,.2,1)}
+.ev{font-size:9.5px;color:var(--mid)}
+.pbox{border:1px solid rgba(0,229,200,0.17);border-radius:5px;padding:10px;background:rgba(0,229,200,0.04);margin:2px 0 12px}
+.pn2{font-family:'Fraunces',serif;font-size:28px;font-weight:200;color:var(--teal);line-height:1}
+.pu{font-size:8px;color:var(--dim);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px}
+.pnote{font-size:9.5px;color:var(--mid);margin-top:5px;font-style:italic}
+.nbox{padding:9px;border-radius:5px;border:1px solid;margin-bottom:11px}
+.ntxt{font-size:9.5px;color:var(--mid);line-height:1.68}
+.gdiv{height:1px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:0.22;margin:10px 0}
+.vchip{display:inline-block;margin:2px 2px 2px 0;padding:3px 8px;border-radius:9px;font-size:8px;letter-spacing:0.04em;border:1px solid}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--dim);text-align:center;gap:7px}
+.ei{font-size:24px;opacity:0.3}
+.et2{font-size:9.5px;letter-spacing:0.06em;line-height:1.65}
+
+/* Compare */
+.cc{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:10px;margin-bottom:7px;cursor:pointer;transition:border-color 0.2s}
+.cc:hover{border-color:var(--border2)}
+.cc.on{border-color:var(--teal);background:rgba(0,229,200,0.04)}
+.cch{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.ccn{font-family:'Fraunces',serif;font-size:12px;font-weight:200;color:var(--bright)}
+.ccs{font-size:18px;font-weight:400}
+.ccg{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px}
+.ccm{display:flex;flex-direction:column;gap:2px}
+.ccml{font-size:7.5px;color:var(--dim);letter-spacing:0.05em}
+.ccmt{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden}
+.ccmf{height:100%;border-radius:2px;transition:width 0.8s ease}
+.ccd{font-size:9px;color:var(--dim);line-height:1.55}
+
+/* Varieties */
+.vc{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:10px;margin-bottom:8px;transition:border-color 0.2s}
+.vc:hover{border-color:var(--border2)}
+.vcn{font-family:'Fraunces',serif;font-size:13px;font-weight:200;margin-bottom:1px}
+.vco{font-size:8.5px;color:var(--dim);font-style:italic;margin-bottom:6px}
+.vcd{font-size:9.5px;color:var(--mid);line-height:1.65;margin-bottom:6px}
+.vct{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px}
+.vcc{font-size:7.5px;padding:2px 6px;border-radius:8px;border:1px solid;letter-spacing:0.03em}
+.vcl{font-size:9px;color:var(--dim)}
+.vcl span{color:var(--teal)}
+
+/* About tab */
+.about-section{margin-bottom:18px}
+.about-h{font-family:'Fraunces',serif;font-size:14px;font-weight:200;color:var(--teal);margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.about-p{font-size:9.5px;color:var(--mid);line-height:1.72;margin-bottom:8px}
+.about-step{display:flex;gap:9px;margin-bottom:7px;padding:8px;background:var(--card);border:1px solid var(--border);border-radius:5px}
+.step-num{font-family:'Fraunces',serif;font-size:16px;font-weight:200;color:var(--teal);opacity:0.7;flex-shrink:0;width:20px;line-height:1}
+.step-txt{font-size:9px;color:var(--mid);line-height:1.65}
+.step-title{font-size:9.5px;color:var(--bright);margin-bottom:2px;letter-spacing:0.03em}
+.link-pill{display:inline-block;font-size:8px;padding:2px 8px;border-radius:10px;background:rgba(0,229,200,0.07);border:1px solid rgba(0,229,200,0.22);color:var(--teal);letter-spacing:0.05em;text-decoration:none;margin:2px 2px 2px 0;cursor:pointer}
+
+/* Scan anim */
+@keyframes sIn{0%{top:-2px;opacity:0.7}100%{top:100vh;opacity:0}}
+.scan{position:fixed;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--teal),transparent);animation:sIn 2s ease-out forwards;z-index:9999;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="scan"></div>
+<div id="app">
+
+<header>
+  <div class="h-brand">
+    <div class="h-title">Wauke · <em>Nā Wahi Ulu</em></div>
+    <div class="h-tag">Kapa Practitioner Map</div>
+    <div class="island-nav">
+      <button class="ibt active" onclick="switchIsland('oahu',this)">Oʻahu</button>
+      <button class="ibt" onclick="switchIsland('maui',this)">Maui</button>
+      <button class="ibt" onclick="switchIsland('hawaii',this)">Hawaiʻi</button>
+      <button class="ibt" onclick="switchIsland('kauai',this)">Kauaʻi</button>
+      <button class="ibt" onclick="switchIsland('molokai',this)">Molokaʻi</button>
+    </div>
+  </div>
+  <div class="h-tabs">
+    <button class="tab active" onclick="switchTab('map',event)">Map</button>
+    <button class="tab" onclick="switchTab('compare',event)">Env. Compare</button>
+    <button class="tab" onclick="switchTab('varieties',event)">Varieties</button>
+    <button class="tab" onclick="switchTab('about',event)">Kapa + Wauke</button>
+  </div>
+  <div style="font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--dim)">Hawaiʻi · 2026</div>
+</header>
+
+<div id="main">
+
+  <!-- LEFT SIDEBAR -->
+  <div id="sl">
+    <div class="ss">
+      <div class="sl">Nā Papa · Layers</div>
+      <div class="lr" onclick="toggleLayer('wauke',this)">
+        <div class="ld" id="ld-wauke" style="background:var(--teal);color:var(--teal)"></div>
+        <div class="lt">Wauke sites<small>Nā wahi mahi wauke</small></div>
+      </div>
+      <div class="lr" onclick="toggleLayer('bamboo',this)">
+        <div class="ld" id="ld-bamboo" style="background:var(--bamboo);color:var(--bamboo)"></div>
+        <div class="lt">Bamboo (ʻohe)<small>For ʻohe kapala · kapa stamps</small></div>
+      </div>
+      <div class="lr" onclick="toggleLayer('moku',this)">
+        <div class="ld" id="ld-moku" style="background:#6080ff;color:#6080ff"></div>
+        <div class="lt">Moku districts<small>Nā mokupuni ʻāina</small></div>
+      </div>
+      <div class="lr" onclick="toggleLayer('rain',this)">
+        <div class="ld off" id="ld-rain" style="background:var(--blue);color:var(--blue)"></div>
+        <div class="lt">Wet / dry zones<small>Ka ua · rainfall suitability for wauke</small></div>
+      </div>
+    </div>
+    <div class="ss" style="padding-bottom:6px">
+      <div class="sl" id="moku-label">Nā Moku · Oʻahu</div>
+    </div>
+    <div class="ml" id="mokuList"></div>
+  </div>
+
+  <!-- MAP -->
+  <div id="mc">
+    <div id="map"></div>
+    <!-- LEGEND PANEL 1: Always visible — Plant cultivation sites -->
+    <div id="leg-plants" style="position:absolute;bottom:16px;left:13px;z-index:500;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;min-width:200px">
+      <div style="font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Cultivation Sites</div>
+
+      <div style="font-size:7.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);margin-bottom:5px">Wauke · Bamboo · Future plants</div>
+      <div class="li" style="margin-bottom:2px">
+        <div class="ld2" style="background:var(--green);box-shadow:0 0 5px var(--green)"></div>
+        <div><div style="color:var(--green);font-size:9px;font-weight:500">Active cultivation</div><div style="font-size:8px;color:var(--dim)">Harvesting underway</div></div>
+      </div>
+      <div class="li" style="margin-bottom:2px">
+        <div class="ld2" style="background:var(--teal);box-shadow:0 0 4px var(--teal)"></div>
+        <div><div style="color:var(--teal);font-size:9px;font-weight:500">Potential site</div><div style="font-size:8px;color:var(--dim)">Conditions confirmed suitable</div></div>
+      </div>
+      <div class="li" style="margin-bottom:2px">
+        <div class="ld2" style="background:var(--pink);box-shadow:0 0 4px var(--pink)"></div>
+        <div><div style="color:var(--pink);font-size:9px;font-weight:500">Study / research</div><div style="font-size:8px;color:var(--dim)">Survey in progress</div></div>
+      </div>
+      <div class="li" style="margin-top:4px;padding-top:6px;border-top:1px solid var(--border)">
+        <div class="ld2" style="background:var(--bamboo);box-shadow:0 0 5px var(--bamboo)"></div>
+        <div><div style="color:var(--bamboo);font-size:9px;font-weight:500">Bamboo (ʻOhe)</div><div style="font-size:8px;color:var(--dim)">ʻOhe kapala source</div></div>
+      </div>
+    </div>
+
+    <!-- LEGEND PANEL 2: Always visible — Moku district borders -->
+    <div id="leg-moku" style="position:absolute;bottom:16px;left:228px;z-index:500;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;min-width:180px">
+      <div style="font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Moku Districts</div>
+      <div class="li" style="margin-bottom:3px">
+        <div style="width:24px;height:3px;background:rgba(0,229,200,0.58);border-radius:2px;flex-shrink:0"></div>
+        <div><div style="font-size:9px;color:var(--bright)">Active moku</div><div style="font-size:8px;color:var(--dim)">Current cultivation</div></div>
+      </div>
+      <div class="li">
+        <div style="width:24px;height:0;border-top:2px dashed rgba(26,180,255,0.5);flex-shrink:0"></div>
+        <div><div style="font-size:9px;color:var(--bright)">Potential / study</div><div style="font-size:8px;color:var(--dim)">Assessed or surveyed</div></div>
+      </div>
+    </div>
+
+    <!-- LEGEND PANEL 3: Only shown when rainfall layer is ON -->
+    <div id="leg-rain" style="position:absolute;bottom:16px;left:423px;z-index:500;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;min-width:190px;display:none">
+      <div style="font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(26,180,255,0.2)">Rainfall Zones</div>
+      <div class="li" style="margin-bottom:3px">
+        <div style="width:20px;height:10px;border:1.5px dashed rgba(0,200,255,0.6);background:rgba(0,180,255,0.18);border-radius:2px;flex-shrink:0"></div>
+        <div><div style="color:#1ab4ff;font-size:9px;font-weight:500">Wet · Ka ua</div><div style="font-size:8px;color:var(--dim)">60+ in/yr · wauke-favorable</div></div>
+      </div>
+      <div class="li">
+        <div style="width:20px;height:10px;border:1.5px dashed rgba(255,170,0,0.55);background:rgba(220,140,0,0.16);border-radius:2px;flex-shrink:0"></div>
+        <div><div style="color:#ffb830;font-size:9px;font-weight:500">Dry · Ka wela</div><div style="font-size:8px;color:var(--dim)">&lt;40 in/yr · irrigation needed</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="pr">
+
+    <!-- MAP DETAIL -->
+    <div id="view-map" class="vp on">
+      <div class="ph">
+        <div class="pt" id="dn">Select a site</div>
+        <div class="ps" id="ds">Click a marker or moku to explore</div>
+      </div>
+      <div class="pb" id="db">
+        <div class="empty"><div class="ei">◎</div><div class="et2">Click any glowing site<br>on the map to see cultivation<br>data and ecological conditions</div></div>
+      </div>
+    </div>
+
+    <!-- COMPARE -->
+    <div id="view-compare" class="vp">
+      <div class="ph">
+        <div class="pt">Environmental Compare</div>
+        <div class="ps" id="comp-sub">Ke Kaiapuni · By Moku</div>
+      </div>
+      <div class="pb" id="comp-body"></div>
+    </div>
+
+    <!-- VARIETIES -->
+    <div id="view-varieties" class="vp">
+      <div class="ph">
+        <div class="pt">Wauke Varieties</div>
+        <div class="ps">Nā ʻano wauke · cultivated in Hawaiʻi</div>
+      </div>
+      <div class="pb" id="var-body"></div>
+    </div>
+
+    <!-- ABOUT / KAPA -->
+    <div id="view-about" class="vp">
+      <div class="ph">
+        <div class="pt">Kapa + Wauke</div>
+        <div class="ps">Ka hana kapa · cultural context</div>
+      </div>
+      <div class="pb">
+
+        <div class="about-section">
+          <div class="about-h">What is Wauke?</div>
+          <div class="about-p">Wauke (<em>Broussonetia papyrifera</em>), or paper mulberry, was brought to Hawaiʻi by Polynesian voyagers. Its bast fiber produces the finest, most durable kapa in the Pacific. Wauke thrives in mesic valleys and near stream banks — rich soil, high moisture, wind protection. Because Hawaiian wauke is largely seedless, it propagates vegetatively through root suckers rather than seeds.</div>
+          <div class="about-p">Wauke requires a growing cycle of 1–2 years before harvest. Each stalk is stripped of its outer bark, the inner bast soaked and fermented, then beaten into sheets of kapa. The connection between the plant and the textile is direct — the quality of the kapa reflects the care of cultivation.</div>
+        </div>
+
+        <div class="about-section">
+          <div class="about-h">The Kapa Process</div>
+          <div class="about-step"><div class="step-num">1</div><div class="step-txt"><div class="step-title">Harvesting</div>Outer bark stripped from cultivated wauke stalks to expose the soft, fibrous inner bast. Timing is critical — stalks harvested at 1–2 years yield the best fiber.</div></div>
+          <div class="about-step"><div class="step-num">2</div><div class="step-txt"><div class="step-title">Fermentation & Initial Beating</div>Bast is soaked and fermented to soften fibers. First beating done with a rounded wooden mallet (hohoa) to begin spreading the fiber.</div></div>
+          <div class="about-step"><div class="step-num">3</div><div class="step-txt"><div class="step-title">Final Beating · ʻIe Kuku</div>Intricately carved four-sided mallets (ʻie kuku) beat the sheets into thin, felt-like fabric. The carved designs transfer unique translucent watermarks.</div></div>
+          <div class="about-step"><div class="step-num">4</div><div class="step-txt"><div class="step-title">Dyeing & Stamping · ʻOhe Kapala</div>Kapa is dyed using native plants, flowers, roots, and clays. Patterns are stamped using carved bamboo stamps — ʻohe kapala — made from bamboo (ʻohe). This is why bamboo cultivation matters for kapa practitioners.</div></div>
+        </div>
+
+        <div class="about-section">
+          <div class="about-h">Bamboo (ʻOhe) in Kapa Making</div>
+          <div class="about-p">Bamboo is the primary material for ʻohe kapala — the carved stamp tools used to apply geometric patterns to finished kapa. Practitioners carve intricate designs into bamboo nodes, then press them onto dyed kapa surfaces. Non-invasive clumping bamboo varieties are preferred by cultural practitioners. Bamboo sites are mapped here alongside wauke to support kapa practitioners sourcing both materials.</div>
+        </div>
+
+        <div class="about-section">
+          <div class="about-h">Cultural Revival</div>
+          <div class="about-p">Traditional kapa was replaced by imported fabrics after Western contact. By the early 20th century, the knowledge had nearly vanished. The Hawaiian Renaissance of the 1960s–70s revived the practice. Today, practitioners at studios like Pūkoʻa Studios maintain seven active wauke patches across Oʻahu, continuing to grow, harvest, and beat kapa for hula, ceremony, and art.</div>
+          <a class="link-pill" href="https://pukoastudios.com/pages/hawaiian-kapa" target="_blank">Pūkoʻa Studios ↗</a>
+          <a class="link-pill" href="https://lehuauakea.com/what-is-kapa" target="_blank">Lehuauakea Studio ↗</a>
+          <a class="link-pill" href="https://www.manoaheritagecenter.org/moolelo/polynesian-introduction-plants/wauke/" target="_blank">Mānoa Heritage Center ↗</a>
+        </div>
+
+        <div class="about-section">
+          <div class="about-h">Ecological Purpose</div>
+          <div class="about-p">Expanding wauke cultivation addresses a deeper ecological question: can we restore relationship to the land through the revival of material culture? Wauke cultivation in valleys and near waterways supports soil health, provides canopy structure, and reintroduces a keystone canoe plant to degraded landscapes. This map argues that the conditions for restoration exist — and locates them precisely.</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA — Accurate to known documented sites
+// ═══════════════════════════════════════════════
+
+const VARIETIES = [
+  {
+    id:'poaha', name:"Pōʻaha",
+    olelo:"poʻaʻaha · rounded-leaf wauke",
+    desc:"One of the two most prominent traditional varieties. Favored for thinner, more delicate kapa. Leaves are velvety-soft and primarily rounded rather than deeply lobed. Produces a refined, smooth fiber.",
+    traits:["Delicate kapa","Velvety leaves","Rounded leaf form","Fine texture"],
+    color:"rgba(0,229,200,0.92)", border:"rgba(0,229,200,0.28)", bg:"rgba(0,229,200,0.07)",
+    locs:["Waimea Valley (Oahu)","Mānoa Heritage Center (Oahu)","Maui Nui Botanical Gardens (Maui)"]
+  },
+  {
+    id:'laulima', name:"Laulima",
+    olelo:"laulima · many hands",
+    desc:"The second main cultivated variety, grown alongside Pōʻaha. Characterized by lighter-colored bark. Specific leaf properties make it a favorite among modern cultural practitioners for its workability and consistent fiber output.",
+    traits:["Light-colored bark","Practitioner favorite","High workability","Consistent yield"],
+    color:"rgba(57,255,154,0.92)", border:"rgba(57,255,154,0.28)", bg:"rgba(57,255,154,0.07)",
+    locs:["Pūkoʻa Studios patches (Oahu)","Bishop Museum (Oahu)","Puʻuhonua o Hōnaunau NHP (Hawaiʻi)"]
+  },
+  {
+    id:'kuloli', name:"Kūloli",
+    olelo:"kūloli · rare cave variety",
+    desc:"A rare and storied variety historically grown in the Palilua and Kūloli regions of Kona, Hawaiʻi. Legendarily associated with a single wauke plant growing alone in a cave. Its bark was prized for pulu ʻoloa — a specialized, extremely thin kapa.",
+    traits:["Very rare","Kona-specific","Cave-grown legend","Ultra-thin kapa (pulu ʻoloa)"],
+    color:"rgba(224,65,138,0.92)", border:"rgba(224,65,138,0.28)", bg:"rgba(224,65,138,0.07)",
+    locs:["Kona, Hawaiʻi Island (historic)","Kaupō, Maui (isolated stands reported)"]
+  },
+];
+
+// ── OAHU MOKU — accurate coordinates from 1902 survey + modern reference ──
+// 6 moku: Ko'olauloa, Waialua, Wai'anae, 'Ewa, Kona, Ko'olaupoko
+const OAHU_MOKU = [
+  {
+    id:'koolauloa', name:"Koʻolauloa", status:'active', score:88,
+    env:{rain:88,soil:85,canopy:62,elev:420},
+    desc:"Northern windward coast. Highest sustained rainfall. Deep valley soils ideal for wauke. Waimea Valley — largest active grove on Oʻahu.",
+    poly:[
+      [21.700,-158.020],[21.688,-157.960],[21.672,-157.875],[21.650,-157.782],
+      [21.622,-157.700],[21.598,-157.658],[21.570,-157.648],[21.548,-157.672],
+      [21.535,-157.718],[21.528,-157.775],[21.538,-157.842],[21.552,-157.902],
+      [21.564,-157.962],[21.570,-158.020],[21.576,-158.068],[21.590,-158.115],
+      [21.618,-158.102],[21.644,-158.058],[21.668,-158.022],[21.700,-158.020]
+    ]
+  },
+  {
+    id:'waialua', name:"Waialua", status:'potential', score:60,
+    env:{rain:45,soil:65,canopy:22,elev:220},
+    desc:"North shore plains. Former sugar plantation land. Good soil depth along Waimea/Anahulu streams. Medium propagation potential — water access key.",
+    poly:[
+      [21.570,-158.020],[21.576,-158.068],[21.590,-158.115],[21.618,-158.102],
+      [21.644,-158.058],[21.668,-158.022],[21.700,-158.020],[21.700,-158.180],
+      [21.668,-158.205],[21.638,-158.228],[21.604,-158.245],[21.578,-158.262],
+      [21.574,-158.278],[21.558,-158.250],[21.534,-158.205],[21.514,-158.162],
+      [21.502,-158.118],[21.498,-158.075],[21.502,-158.032],[21.512,-157.992],
+      [21.526,-157.960],[21.538,-157.920],[21.552,-157.902],[21.538,-157.842],
+      [21.528,-157.775],[21.535,-157.718],[21.548,-157.672],[21.570,-158.020]
+    ]
+  },
+  {
+    id:'waianae', name:"Waiʻanae", status:'active', score:72,
+    env:{rain:58,soil:72,canopy:38,elev:850},
+    desc:"Leeward coast. Deep alluvial valley soils at Mākaha and Lualualei. Community-led wauke restoration since 2019. Drier conditions require valley placement.",
+    poly:[
+      [21.574,-158.278],[21.578,-158.262],[21.604,-158.245],[21.638,-158.228],
+      [21.668,-158.205],[21.700,-158.180],[21.700,-158.340],[21.540,-158.340],
+      [21.428,-158.268],[21.385,-158.205],[21.366,-158.162],[21.348,-158.128],
+      [21.338,-158.118],[21.358,-158.082],[21.376,-158.052],[21.392,-158.022],
+      [21.412,-158.002],[21.438,-157.992],[21.462,-157.996],[21.478,-158.012],
+      [21.492,-158.042],[21.498,-158.075],[21.502,-158.118],[21.514,-158.162],
+      [21.534,-158.205],[21.558,-158.250],[21.574,-158.278]
+    ]
+  },
+  {
+    id:'ewa', name:"ʻEwa", status:'potential', score:44,
+    env:{rain:32,soil:46,canopy:10,elev:450},
+    desc:"Dry leeward central plain. Former plantation. Irrigation required for wauke cultivation. Pearl Harbor watershed — longer restoration timeline.",
+    poly:[
+      [21.462,-157.996],[21.438,-157.992],[21.412,-158.002],[21.392,-158.022],
+      [21.376,-158.052],[21.358,-158.082],[21.338,-158.118],[21.318,-158.082],
+      [21.300,-158.042],[21.290,-158.002],[21.282,-157.965],[21.280,-157.928],
+      [21.282,-157.895],[21.292,-157.868],[21.310,-157.852],[21.330,-157.848],
+      [21.350,-157.854],[21.364,-157.864],[21.374,-157.880],[21.380,-157.900],
+      [21.384,-157.926],[21.388,-157.955],[21.392,-157.975],[21.402,-157.985],
+      [21.422,-157.988],[21.442,-157.990],[21.462,-157.996]
+    ]
+  },
+  {
+    id:'kona', name:"Kona", status:'active', score:70,
+    env:{rain:68,soil:58,canopy:60,elev:1200},
+    desc:"Honolulu district including Mānoa, Nuʻuanu. Active research plots in upper valleys. Mānoa Heritage Center and Bishop Museum maintain documented wauke.",
+    poly:[
+      [21.384,-157.926],[21.380,-157.900],[21.374,-157.880],[21.364,-157.864],
+      [21.350,-157.854],[21.330,-157.848],[21.310,-157.852],[21.292,-157.868],
+      [21.282,-157.895],[21.272,-157.918],[21.260,-157.902],[21.250,-157.880],
+      [21.248,-157.852],[21.250,-157.828],[21.256,-157.808],[21.268,-157.800],
+      [21.282,-157.798],[21.298,-157.800],[21.314,-157.805],[21.330,-157.808],
+      [21.346,-157.808],[21.360,-157.806],[21.372,-157.806],[21.380,-157.810],
+      [21.386,-157.818],[21.390,-157.840],[21.390,-157.862],[21.390,-157.886],
+      [21.388,-157.908],[21.384,-157.926]
+    ]
+  },
+  {
+    id:'koolaupoko', name:"Koʻolaupoko", status:'active', score:82,
+    env:{rain:75,soil:78,canopy:55,elev:350},
+    desc:"Windward central — Kāneʻohe, Kahaluʻu, Kailua. Consistent orographic rainfall. Fertile coastal plain and valley soils. Strong community cultivation interest.",
+    poly:[
+      [21.528,-157.775],[21.535,-157.718],[21.548,-157.672],[21.570,-157.648],
+      [21.598,-157.658],[21.622,-157.700],[21.650,-157.782],[21.672,-157.875],
+      [21.688,-157.960],[21.564,-157.962],[21.552,-157.902],[21.538,-157.920],
+      [21.526,-157.960],[21.512,-157.992],[21.502,-158.032],[21.498,-158.075],
+      [21.492,-158.042],[21.478,-158.012],[21.462,-157.996],[21.442,-157.990],
+      [21.422,-157.988],[21.402,-157.985],[21.392,-157.975],[21.388,-157.955],
+      [21.384,-157.926],[21.388,-157.908],[21.390,-157.886],[21.390,-157.862],
+      [21.390,-157.840],[21.386,-157.818],[21.380,-157.810],[21.372,-157.806],
+      [21.360,-157.806],[21.346,-157.808],[21.330,-157.808],[21.318,-157.805],
+      [21.310,-157.760],[21.320,-157.724],[21.334,-157.704],[21.350,-157.688],
+      [21.366,-157.684],[21.382,-157.690],[21.398,-157.700],[21.414,-157.712],
+      [21.430,-157.722],[21.446,-157.730],[21.464,-157.734],[21.480,-157.738],
+      [21.496,-157.745],[21.512,-157.758],[21.524,-157.768],[21.528,-157.775]
+    ]
+  }
+];
+
+const ISLANDS = {
+  oahu:{
+    name:"Oʻahu", center:[21.46,-157.99], zoom:11,
+    moku: OAHU_MOKU,
+    sites:[
+      // ── WAUKE SITES ──
+      {id:'waimea',type:'wauke',name:"Waimea Valley",moku:'koolauloa',lat:21.6383,lng:-158.0508,status:'active',
+       env:{rain:88,soil:90,canopy:62,elev:400},prop:560,
+       propNote:"3–4 harvests/yr. Largest grove on Oʻahu.",
+       varieties:['poaha','laulima'],
+       notes:"Managed by Waimea Valley Audubon Center. Largest established wauke grove on Oʻahu. Model site — practitioners visit for cultivation study. Also contains bamboo in arboretum grounds.",
+       contact:"Waimea Valley, 59-864 Kamehameha Hwy"},
+      {id:'manoa-hc',type:'wauke',name:"Mānoa Heritage Center",moku:'kona',lat:21.3195,lng:-157.8068,status:'active',
+       env:{rain:72,soil:55,canopy:65,elev:800},prop:80,
+       propNote:"Pilot scale. Documented Polynesian introduction garden.",
+       varieties:['poaha'],
+       notes:"Cultivates wauke in its formal Polynesian introduction garden. Educational access for practitioners and students. One of the most documented wauke sites on island.",
+       contact:"2859 Mānoa Rd, Honolulu"},
+      {id:'pukoastudios',type:'wauke',name:"Pūkoʻa Studios (7 patches)",moku:'kona',lat:21.3310,lng:-157.8420,status:'active',
+       env:{rain:68,soil:60,canopy:50,elev:300},prop:320,
+       propNote:"7 active patches island-wide. Primary kapa-making operation.",
+       varieties:['poaha','laulima'],
+       notes:"Pūkoʻa Studios maintains seven actively cultivated wauke patches across Oʻahu specifically for kapa making. The primary active kapa production studio in Hawaiʻi. Contact for practitioner access.",
+       contact:"pukoastudios.com"},
+      {id:'bishop',type:'wauke',name:"Bishop Museum",moku:'kona',lat:21.3336,lng:-157.8694,status:'active',
+       env:{rain:65,soil:58,canopy:40,elev:160},prop:60,
+       propNote:"Ethnobotanical grounds. Educational access.",
+       varieties:['laulima'],
+       notes:"Grows wauke on ethnobotanical campus grounds. Access for researchers and students. Part of ongoing cultural documentation program.",
+       contact:"1525 Bernice St, Honolulu"},
+      {id:'kahaluu',type:'wauke',name:"Kahaluʻu Ahupuaʻa",moku:'koolaupoko',lat:21.4379,lng:-157.8377,status:'potential',
+       env:{rain:70,soil:82,canopy:20,elev:180},prop:380,
+       propNote:"Strong conditions. Ahupuaʻa boundaries surveyed 2025.",
+       varieties:['poaha','laulima'],
+       notes:"Windward conditions match Waimea Valley profile. Community interest confirmed. Awaiting landowner partnership. High priority expansion site.",
+       contact:"Kahaluʻu, Koʻolaupoko"},
+      {id:'nuuanu',type:'wauke',name:"Nuʻuanu Valley",moku:'kona',lat:21.3355,lng:-157.8290,status:'study',
+       env:{rain:80,soil:60,canopy:55,elev:950},prop:null,
+       propNote:"Feasibility study in progress.",
+       varieties:['laulima'],
+       notes:"Historic kapa-making corridor. Assessment in collaboration with Bishop Museum. Upper valley parcels suitable — access and land tenure under review.",
+       contact:"Nuʻuanu Valley, Honolulu"},
+      {id:'makaha',type:'wauke',name:"Mākaha Valley",moku:'waianae',lat:21.4742,lng:-158.2089,status:'active',
+       env:{rain:62,soil:76,canopy:35,elev:850},prop:240,
+       propNote:"Community-managed. 3 harvests/yr.",
+       varieties:['poaha','laulima'],
+       notes:"Active community cultivation since 2019. Primary wauke source for Waiʻanae kapa practitioners. Deep alluvial valley soil supports healthy stands.",
+       contact:"Mākaha Valley, Waiʻanae"},
+      {id:'lualualei',type:'wauke',name:"Lualualei Valley",moku:'waianae',lat:21.4268,lng:-158.1556,status:'potential',
+       env:{rain:40,soil:68,canopy:15,elev:600},prop:150,
+       propNote:"Drip irrigation infrastructure needed.",
+       varieties:['laulima'],
+       notes:"Large flat parcels identified. Drip irrigation feasibility study complete — viable with investment. Medium-term expansion candidate.",
+       contact:"Lualualei, Waiʻanae"},
+      {id:'haleiwa',type:'wauke',name:"Haleʻiwa Uplands",moku:'waialua',lat:21.6048,lng:-158.1098,status:'potential',
+       env:{rain:48,soil:65,canopy:18,elev:220},prop:200,
+       propNote:"Former ag land. Irrigation via historic channels.",
+       varieties:['laulima'],
+       notes:"Former sugarcane land with good soil depth. Anahulu Stream provides water access potential via restored irrigation infrastructure.",
+       contact:"Haleʻiwa, Waialua"},
+      // ── BAMBOO SITES ──
+      {id:'waimea-bamboo',type:'bamboo',name:"Waimea Valley Arboretum (Bamboo)",moku:'koolauloa',lat:21.6370,lng:-158.0480,status:'active',
+       env:{rain:88,soil:88,canopy:70,elev:350},prop:null,
+       propNote:"Active arboretum bamboo grove.",
+       notes:"Towering bamboo grove within Waimea Valley Arboretum. Non-invasive species. Accessible to practitioners for ʻohe kapala material sourcing.",
+       contact:"Waimea Valley, 59-864 Kamehameha Hwy"},
+      {id:'oahu-bamboo-ns',type:'bamboo',name:"Oahu Bamboo (North Shore)",moku:'waialua',lat:21.6200,lng:-158.0600,status:'active',
+       env:{rain:48,soil:68,canopy:30,elev:100},prop:null,
+       propNote:"Non-invasive clumping varieties. Sustainably farmed.",
+       notes:"Oahu Bamboo grows non-invasive clumping bamboo varieties on the North Shore. Sourced by practitioners for ʻohe kapala carving. Contact for material access.",
+       contact:"oahubamboo.com"},
+    ]
+  },
+
+  maui:{
+    name:"Maui", center:[20.80,-156.33], zoom:11,
+    moku:[
+      {id:'lahaina',name:"Lāhaina",status:'potential',score:65,env:{rain:25,soil:55,canopy:12,elev:200},desc:"Leeward West Maui. Dry. Historic kapa district. Irrigation needed.",poly:[[20.90,-156.70],[20.90,-156.55],[20.82,-156.50],[20.76,-156.52],[20.70,-156.55],[20.68,-156.65],[20.72,-156.72],[20.80,-156.74],[20.88,-156.72],[20.90,-156.70]]},
+      {id:'kaanapalii',name:"Kāʻanapali",status:'potential',score:58,env:{rain:30,soil:60,canopy:15,elev:180},desc:"NW Maui. Former sugar land. Medium potential.",poly:[[20.98,-156.73],[20.98,-156.63],[20.92,-156.60],[20.90,-156.70],[20.88,-156.72],[20.80,-156.74],[20.82,-156.76],[20.90,-156.78],[20.96,-156.76],[20.98,-156.73]]},
+      {id:'wailuku',name:"Wailuku",status:'active',score:74,env:{rain:55,soil:72,canopy:35,elev:450},desc:"Central valley. Irrigated ag history. Maui Nui Botanical Gardens in Kahului cultivates documented wauke varieties.",poly:[[20.92,-156.48],[20.92,-156.38],[20.88,-156.32],[20.84,-156.28],[20.80,-156.26],[20.76,-156.30],[20.74,-156.38],[20.76,-156.46],[20.80,-156.52],[20.86,-156.50],[20.92,-156.48]]},
+      {id:'hamakuapoko',name:"Hāmākuapoko",status:'potential',score:80,env:{rain:75,soil:80,canopy:42,elev:550},desc:"North Maui uplands. High rainfall. Strong wauke potential.",poly:[[20.92,-156.38],[20.94,-156.28],[20.96,-156.22],[20.96,-156.14],[20.92,-156.10],[20.88,-156.12],[20.84,-156.14],[20.82,-156.20],[20.82,-156.28],[20.88,-156.32],[20.92,-156.38]]},
+      {id:'hamakualoa',name:"Hāmākualoa",status:'study',score:76,env:{rain:82,soil:78,canopy:50,elev:620},desc:"North windward. Very high rainfall. Study underway.",poly:[[20.96,-156.14],[20.98,-156.04],[20.98,-155.96],[20.94,-155.92],[20.90,-155.92],[20.86,-155.96],[20.84,-156.04],[20.84,-156.14],[20.88,-156.12],[20.92,-156.10],[20.96,-156.14]]},
+      {id:'koolau',name:"Koʻolau",status:'study',score:72,env:{rain:88,soil:75,canopy:60,elev:700},desc:"East Maui windward. Extremely wet. Native forest buffer.",poly:[[20.94,-155.92],[20.96,-155.84],[20.94,-155.76],[20.90,-155.72],[20.86,-155.74],[20.82,-155.78],[20.80,-155.86],[20.82,-155.94],[20.86,-155.96],[20.90,-155.92],[20.94,-155.92]]},
+      {id:'hana',name:"Hāna",status:'study',score:82,env:{rain:90,soil:82,canopy:65,elev:350},desc:"East Maui. Highest rainfall. Priority study area. Historic wauke.",poly:[[20.80,-155.86],[20.82,-155.78],[20.80,-155.72],[20.76,-155.70],[20.72,-155.72],[20.70,-155.78],[20.70,-155.86],[20.74,-155.90],[20.78,-155.90],[20.80,-155.86]]},
+      {id:'kula',name:"Kula",status:'potential',score:68,env:{rain:45,soil:65,canopy:20,elev:3000},desc:"Upcountry slopes. Cooler elevation. Experimental plots.",poly:[[20.82,-156.28],[20.82,-156.20],[20.80,-156.12],[20.76,-156.08],[20.72,-156.10],[20.70,-156.18],[20.70,-156.28],[20.74,-156.34],[20.78,-156.36],[20.82,-156.28]]},
+      {id:'kaupo',name:"Kaupō",status:'potential',score:50,env:{rain:35,soil:60,canopy:18,elev:550},desc:"Dry SE. Isolated wauke stands reported. Historic cultivation.",poly:[[20.70,-155.86],[20.70,-155.78],[20.68,-155.74],[20.64,-155.74],[20.62,-155.80],[20.62,-155.88],[20.66,-155.92],[20.70,-155.92],[20.70,-155.86]]},
+    ],
+    sites:[
+      {id:'mnbg',type:'wauke',name:"Maui Nui Botanical Gardens",moku:'wailuku',lat:20.8936,lng:-156.4740,status:'active',env:{rain:25,soil:65,canopy:30,elev:50},prop:120,propNote:"Active. Maintains distinct named Hawaiian varieties.",varieties:['poaha','laulima'],notes:"Primary site for observing and learning about Pōʻaha and Laulima varieties. Cultural practitioners visit for variety identification and study. Educational programs available.",contact:"150 Kanaloa Ave, Kahului"},
+      {id:'hana-wauke',type:'wauke',name:"Hāna Cultural Site",moku:'hana',lat:20.7560,lng:-155.9900,status:'study',env:{rain:90,soil:82,canopy:65,elev:300},prop:null,propNote:"Study phase. High ecological potential.",varieties:['poaha'],notes:"Historic cultivation area confirmed through oral record. Community assessment underway 2025. Hāna district has ideal conditions — among the highest rainfall on Maui.",contact:"Hāna District, East Maui"},
+      {id:'kaupo-wauke',type:'wauke',name:"Kaupō Isolated Stands",moku:'kaupo',lat:20.6420,lng:-155.8200,status:'study',env:{rain:35,soil:60,canopy:18,elev:550},prop:null,propNote:"Wild stands documented. Cultural monitoring.",varieties:['kuloli'],notes:"Isolated wauke stands persisting in remote Kaupō district. Possibly including Kūloli variety — documented connection to Kona, Hawaiʻi populations. Monitoring for genetic diversity.",contact:"Kaupō, SE Maui"},
+      {id:'pipiwai-bamboo',type:'bamboo',name:"Pīpīwai Trail Bamboo Forest",moku:'kaupo',lat:20.6633,lng:-156.0033,status:'active',env:{rain:85,soil:78,canopy:80,elev:650},prop:null,propNote:"Famous bamboo grove. Haleakalā NP, Kīpahulu.",notes:"The iconic giant bamboo forest on the Pīpīwai Trail near Haleakalā NP. Primary bamboo resource for Maui kapa practitioners sourcing ʻohe kapala material. Sustainable harvesting permitted with NPS coordination.",contact:"Pīpīwai Trail, Kīpahulu, Haleakalā NP"},
+    ]
+  },
+
+  hawaii:{
+    name:"Hawaiʻi", center:[19.60,-155.50], zoom:9,
+    moku:[
+      {id:'hamakua',name:"Hāmākua",status:'active',score:85,env:{rain:88,soil:82,canopy:55,elev:650},desc:"Windward north coast. High rainfall. Strong wauke cultivation.",poly:[[20.18,-155.65],[20.18,-155.22],[20.00,-155.12],[19.90,-155.12],[19.82,-155.24],[19.82,-155.45],[19.90,-155.60],[20.00,-155.68],[20.10,-155.68],[20.18,-155.65]]},
+      {id:'kohala-n',name:"North Kohala",status:'potential',score:70,env:{rain:60,soil:68,canopy:30,elev:500},desc:"NW tip. Moderate rainfall. Historic community ag.",poly:[[20.28,-155.82],[20.28,-155.62],[20.18,-155.65],[20.10,-155.68],[20.00,-155.68],[20.02,-155.78],[20.08,-155.84],[20.16,-155.88],[20.22,-155.88],[20.28,-155.82]]},
+      {id:'hilo-n',name:"North Hilo",status:'active',score:88,env:{rain:95,soil:85,canopy:60,elev:550},desc:"Very high rainfall. Best wauke conditions on island.",poly:[[20.00,-155.12],[19.90,-155.02],[19.82,-154.98],[19.78,-155.00],[19.76,-155.08],[19.78,-155.18],[19.82,-155.24],[19.90,-155.12],[20.00,-155.12]]},
+      {id:'hilo-s',name:"South Hilo",status:'active',score:84,env:{rain:90,soil:82,canopy:58,elev:500},desc:"High rainfall. Active cultivation in forest margins.",poly:[[19.82,-154.98],[19.78,-154.94],[19.72,-154.92],[19.68,-154.96],[19.66,-155.06],[19.68,-155.16],[19.74,-155.22],[19.78,-155.18],[19.76,-155.08],[19.78,-155.00],[19.82,-154.98]]},
+      {id:'puna',name:"Puna",status:'study',score:72,env:{rain:80,soil:60,canopy:50,elev:350},desc:"Young lava soils. High rainfall but shallow soil on new flows.",poly:[[19.68,-154.96],[19.68,-154.86],[19.62,-154.82],[19.56,-154.84],[19.52,-154.90],[19.50,-155.00],[19.52,-155.10],[19.58,-155.14],[19.64,-155.12],[19.66,-155.06],[19.68,-154.96]]},
+      {id:'kau',name:"Kaʻū",status:'potential',score:50,env:{rain:40,soil:55,canopy:20,elev:1200},desc:"South district. Drier but historically important kapa area.",poly:[[19.22,-155.82],[19.22,-155.38],[19.36,-155.20],[19.50,-155.00],[19.52,-155.10],[19.44,-155.30],[19.34,-155.50],[19.28,-155.68],[19.24,-155.78],[19.22,-155.82]]},
+      {id:'kona-s',name:"South Kona",status:'study',score:74,env:{rain:65,soil:72,canopy:40,elev:700},desc:"Mid-slope. Coffee ag corridor. Puʻuhonua o Hōnaunau active wauke.",poly:[[19.52,-155.90],[19.52,-155.68],[19.44,-155.52],[19.36,-155.46],[19.28,-155.54],[19.22,-155.66],[19.22,-155.82],[19.30,-155.88],[19.40,-155.94],[19.48,-155.94],[19.52,-155.90]]},
+      {id:'kona-n',name:"North Kona",status:'potential',score:58,env:{rain:28,soil:55,canopy:16,elev:450},desc:"Dry leeward. Kailua-Kona urban area. Limited potential.",poly:[[19.82,-155.90],[19.82,-155.70],[19.72,-155.60],[19.62,-155.60],[19.52,-155.68],[19.52,-155.90],[19.60,-155.96],[19.70,-156.00],[19.76,-155.98],[19.82,-155.90]]},
+      {id:'kohala-s',name:"South Kohala",status:'potential',score:55,env:{rain:25,soil:52,canopy:12,elev:400},desc:"Dry leeward coast. Challenging for wauke without irrigation.",poly:[[20.02,-155.78],[20.00,-155.68],[19.90,-155.60],[19.82,-155.45],[19.82,-155.70],[19.88,-155.80],[19.96,-155.84],[20.00,-155.82],[20.02,-155.78]]},
+    ],
+    sites:[
+      {id:'puuhonua',type:'wauke',name:"Puʻuhonua o Hōnaunau NHP",moku:'kona-s',lat:19.4208,lng:-155.9072,status:'active',env:{rain:65,soil:72,canopy:40,elev:600},prop:140,propNote:"Active NPS cultural planting.",varieties:['laulima'],notes:"National Historical Park actively cultivates wauke as part of Hawaiian cultural heritage program. Documented Laulima variety. Accessible to practitioners and visitors for educational study.",contact:"Puʻuhonua o Hōnaunau NHP, South Kona"},
+      {id:'hamakua-site',type:'wauke',name:"Hāmākua Forest Plot",moku:'hamakua',lat:20.0500,lng:-155.4300,status:'active',env:{rain:88,soil:82,canopy:55,elev:650},prop:210,propNote:"Community-managed. 2–3 harvests/yr.",varieties:['poaha','laulima'],notes:"Community-managed forest margin site. Established 2022. High rainfall makes this the most productive Big Island site per acre.",contact:"Hāmākua Coast, Hawaiʻi Island"},
+      {id:'kuloli-site',type:'wauke',name:"Kona Kūloli Study Site",moku:'kona-s',lat:19.5200,lng:-155.7800,status:'study',env:{rain:62,soil:70,canopy:35,elev:800},prop:null,propNote:"Legendary Kūloli variety. Cultural documentation.",varieties:['kuloli'],notes:"Historic site of the legendary Kūloli wauke — a single plant grown in a cave, bark used for pulu ʻoloa kapa. Documentation and propagation study in progress. Extremely rare variety.",contact:"Palilua/Kūloli region, Kona"},
+      {id:'bamboo-village',type:'bamboo',name:"Bamboo Village Hawaiʻi",moku:'hilo-s',lat:19.5800,lng:-155.0800,status:'active',env:{rain:80,soil:72,canopy:55,elev:300},prop:null,propNote:"Permaculture. Sustainable bamboo sourcing.",notes:"Community permaculture project in Lower Puna. Sustainable bamboo for construction and craft. Contact for ʻohe kapala material sourcing.",contact:"bamboovillagehawaii.org"},
+    ]
+  },
+
+  kauai:{
+    name:"Kauaʻi", center:[22.10,-159.52], zoom:11,
+    moku:[
+      {id:'halelea',name:"Haleleʻa",status:'active',score:82,env:{rain:80,soil:78,canopy:50,elev:550},desc:"North shore. High rainfall. Active cultivation in Hanalei corridor.",poly:[[22.26,-159.62],[22.26,-159.50],[22.22,-159.42],[22.18,-159.38],[22.14,-159.40],[22.10,-159.46],[22.10,-159.56],[22.14,-159.62],[22.20,-159.66],[22.26,-159.62]]},
+      {id:'koolau-kauai',name:"Koʻolau",status:'active',score:85,env:{rain:88,soil:82,canopy:58,elev:600},desc:"NE windward. Highest rainfall. Priority cultivation zone.",poly:[[22.26,-159.50],[22.24,-159.38],[22.20,-159.30],[22.16,-159.26],[22.12,-159.28],[22.08,-159.36],[22.06,-159.44],[22.10,-159.46],[22.14,-159.40],[22.18,-159.38],[22.22,-159.42],[22.26,-159.50]]},
+      {id:'puna-kauai',name:"Puna",status:'potential',score:74,env:{rain:62,soil:72,canopy:38,elev:420},desc:"East coast. Consistent rain. Strong propagation potential.",poly:[[22.08,-159.36],[22.06,-159.44],[22.02,-159.44],[21.98,-159.40],[21.96,-159.32],[21.98,-159.26],[22.04,-159.24],[22.10,-159.26],[22.12,-159.28],[22.08,-159.36]]},
+      {id:'kona-kauai',name:"Kona",status:'potential',score:60,env:{rain:35,soil:60,canopy:18,elev:350},desc:"South/interior. Moderate to dry. Medium potential.",poly:[[21.96,-159.56],[21.96,-159.44],[21.96,-159.32],[21.98,-159.26],[22.04,-159.24],[22.02,-159.18],[21.96,-159.18],[21.90,-159.22],[21.88,-159.30],[21.88,-159.42],[21.90,-159.50],[21.94,-159.56],[21.96,-159.56]]},
+      {id:'napali',name:"Nāpali",status:'study',score:78,env:{rain:65,soil:70,canopy:55,elev:800},desc:"Inaccessible sea cliffs. Study only. Historically cultivated valleys.",poly:[[22.26,-159.62],[22.20,-159.66],[22.14,-159.68],[22.08,-159.68],[22.04,-159.64],[22.00,-159.58],[21.96,-159.56],[21.94,-159.56],[21.90,-159.50],[21.90,-159.60],[21.94,-159.68],[22.00,-159.70],[22.08,-159.76],[22.16,-159.74],[22.22,-159.70],[22.26,-159.64],[22.26,-159.62]]},
+      {id:'mana',name:"Mana",status:'potential',score:42,env:{rain:20,soil:45,canopy:8,elev:100},desc:"Driest on island. Western coastal plain. Low wauke potential.",poly:[[21.96,-159.56],[21.96,-159.68],[22.00,-159.70],[21.94,-159.68],[21.90,-159.60],[21.90,-159.50],[21.88,-159.42],[21.88,-159.50],[21.90,-159.56],[21.94,-159.58],[21.96,-159.56]]},
+    ],
+    sites:[
+      {id:'hanalei',type:'wauke',name:"Hanalei Valley Cultural Plot",moku:'halelea',lat:22.2050,lng:-159.4780,status:'active',env:{rain:80,soil:78,canopy:50,elev:550},prop:180,propNote:"Active. Alongside taro cultivation.",varieties:['poaha','laulima'],notes:"Co-managed alongside traditional taro cultivation in Hanalei. High rainfall supports excellent wauke growth. Community access for practitioners.",contact:"Hanalei Valley, North Kauaʻi"},
+      {id:'kokee-bamboo',type:'bamboo',name:"Kōkeʻe Bamboo Groves",moku:'napali',lat:22.1200,lng:-159.6300,status:'active',env:{rain:65,soil:68,canopy:55,elev:3600},prop:null,propNote:"Alaka'i Swamp Trail area. NTBG managed.",notes:"Extensive bamboo groves near Kōkeʻe and Alaka'i Swamp. National Tropical Botanical Garden manages sustainable bamboo for cultural practitioners.",contact:"Kōkeʻe State Park / NTBG, Kauaʻi"},
+    ]
+  },
+
+  molokai:{
+    name:"Molokaʻi", center:[21.12,-156.99], zoom:11,
+    moku:[
+      {id:'koolah-mol',name:"Koʻolau",status:'study',score:82,env:{rain:80,soil:78,canopy:55,elev:650},desc:"East Molokaʻi. Highest rainfall. Native forest. High priority.",poly:[[21.22,-156.72],[21.22,-156.60],[21.16,-156.56],[21.10,-156.56],[21.06,-156.62],[21.06,-156.72],[21.10,-156.78],[21.16,-156.78],[21.22,-156.72]]},
+      {id:'halawa-mol',name:"Hālawa",status:'active',score:80,env:{rain:85,soil:80,canopy:60,elev:580},desc:"Sacred east valley. Active cultural restoration. Historic wauke presence documented.",poly:[[21.16,-156.56],[21.10,-156.56],[21.06,-156.60],[21.04,-156.65],[21.06,-156.72],[21.10,-156.78],[21.16,-156.78],[21.18,-156.68],[21.16,-156.60],[21.16,-156.56]]},
+      {id:'palaau-mol',name:"Pālaʻau",status:'potential',score:62,env:{rain:40,soil:60,canopy:22,elev:400},desc:"Central plateau. Moderate conditions. Some cultivation potential.",poly:[[21.22,-157.12],[21.22,-156.92],[21.22,-156.72],[21.16,-156.78],[21.10,-156.78],[21.06,-156.82],[21.06,-156.92],[21.08,-157.02],[21.12,-157.10],[21.16,-157.14],[21.22,-157.12]]},
+      {id:'kona-mol',name:"Kona",status:'potential',score:50,env:{rain:22,soil:50,canopy:10,elev:200},desc:"South coast. Very dry. Limited potential without irrigation.",poly:[[21.22,-157.28],[21.22,-157.12],[21.16,-157.14],[21.12,-157.10],[21.08,-157.02],[21.06,-156.92],[21.04,-157.00],[21.04,-157.12],[21.06,-157.22],[21.10,-157.28],[21.16,-157.30],[21.22,-157.28]]},
+    ],
+    sites:[
+      {id:'halawa-site',type:'wauke',name:"Hālawa Valley",moku:'halawa-mol',lat:21.1530,lng:-156.7170,status:'active',env:{rain:85,soil:80,canopy:60,elev:580},prop:95,propNote:"Sacred valley. Small active grove.",varieties:['poaha','laulima'],notes:"Sacred ahupuaʻa. Cultivation as part of broader cultural restoration. Community-led. High cultural significance — one of the most intact traditional farming valleys in Hawaiʻi.",contact:"Hālawa Valley, East Molokaʻi"},
+    ]
+  }
+};
+
+// ══════════════════════════════════════════
+// MAP INIT
+// ══════════════════════════════════════════
+const map = L.map('map',{center:[21.46,-157.99],zoom:11,zoomControl:true,attributionControl:true});
+// Dual-layer basemap: CARTO dark over OSM fallback
+// OSM renders dark via CSS filter. CARTO adds richer dark styling on top when available.
+const osmFallback = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom:19, opacity:1
+});
+const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter_all/{z}/{x}/{y}{r}.png',{
+  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains:'abcd', maxZoom:19, opacity:1,
+  errorTileUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+});
+// Add OSM as base, then CARTO on top
+osmFallback.addTo(map);
+cartoDark.addTo(map);
+// If CARTO tiles fail to load, OSM with dark filter still shows
+cartoDark.on('tileerror', function(){});
+
+const MOKU_FILL={active:'rgba(0,229,200,0.09)',potential:'rgba(26,180,255,0.06)',study:'rgba(224,65,138,0.06)'};
+const MOKU_STROKE={active:'rgba(0,229,200,0.52)',potential:'rgba(26,180,255,0.35)',study:'rgba(224,65,138,0.35)'};
+
+let waukeLG=L.layerGroup().addTo(map);
+let bambooLG=L.layerGroup().addTo(map);
+let mokuLG=L.layerGroup().addTo(map);
+let rainLG=L.layerGroup();
+// Rainfall zones built per island - populated in buildRainZones()
+let rainZones={};
+let lState={wauke:true,bamboo:true,moku:true,rain:false};
+let mokuPolys={};
+let activeIsland='oahu';
+
+function scoreColor(s){return s>=80?'var(--green)':s>=65?'var(--teal)':s>=50?'var(--amber)':'var(--pink)'}
+
+function mkIcon(type,status){
+  let cls;
+  if(type==='bamboo') cls='bam';
+  else if(status==='active') cls='act';
+  else if(status==='study') cls='std';
+  else cls='pot';
+  return L.divIcon({className:'',html:`<div class="wm ${cls}"><div class="wd"></div></div>`,iconSize:[15,15],iconAnchor:[7,7],popupAnchor:[0,-9]});
+}
+
+function buildPolys(idata){
+  mokuLG.clearLayers(); mokuPolys={};
+  (idata.moku||[]).forEach(m=>{
+    if(!m.poly||m.poly.length<3) return;
+    const p=L.polygon(m.poly,{fillColor:MOKU_FILL[m.status]||MOKU_FILL.potential,fillOpacity:1,color:MOKU_STROKE[m.status]||MOKU_STROKE.potential,weight:1.4,dashArray:m.status==='active'?null:'5,4'});
+    p.bindTooltip(m.name,{sticky:true,opacity:0.95});
+    p.on('click',()=>selectMoku(m.id));
+    mokuPolys[m.id]=p;
+    if(lState.moku) mokuLG.addLayer(p);
+  });
+}
+
+function buildMarkers(idata){
+  waukeLG.clearLayers(); bambooLG.clearLayers();
+  (idata.sites||[]).forEach(s=>{
+    const mName=(idata.moku.find(m=>m.id===s.moku)||{}).name||'';
+    const mk=L.marker([s.lat,s.lng],{icon:mkIcon(s.type,s.status)});
+    const tc=s.type==='bamboo'?'var(--bamboo)':s.status==='active'?'var(--green)':s.status==='study'?'var(--pink)':'var(--teal)';
+    mk.bindPopup(`<div class="pi">
+      <div class="pn" style="color:${tc}">${s.name}</div>
+      <div class="pm">${mName} · ${s.type==='bamboo'?'Bamboo (ʻohe)':'Wauke'} · ${s.status}</div>
+      ${s.env.rain?`<div class="pr"><span>Rainfall</span><span class="pv">${s.env.rain} in/yr</span></div>`:''}
+      <div class="pr"><span>Propagation</span><span class="pv">${s.prop?s.prop+' wauke/yr':s.type==='bamboo'?'Bamboo site':'Study phase'}</span></div>
+    </div>`,{maxWidth:230});
+    mk.on('click',()=>showDetail(s.id,idata));
+    if(s.type==='bamboo'){if(lState.bamboo) bambooLG.addLayer(mk);}
+    else{if(lState.wauke) waukeLG.addLayer(mk);}
+  });
+}
+
+function buildMokuList(idata){
+  const list=document.getElementById('mokuList');
+  list.innerHTML='';
+  document.getElementById('moku-label').textContent=`Nā Moku · ${idata.name}`;
+  idata.moku.forEach(m=>{
+    const d=document.createElement('div');
+    d.className='mi'; d.id='mi-'+m.id;
+    const bc=m.status==='active'?'ba':m.status==='study'?'bs':'bp';
+    const wCount=(idata.sites||[]).filter(s=>s.moku===m.id&&s.type==='wauke').length;
+    const bCount=(idata.sites||[]).filter(s=>s.moku===m.id&&s.type==='bamboo').length;
+    const sInfo=wCount?`${wCount} wauke${bCount?' · '+bCount+' bamboo':''}`:'No sites yet';
+    d.innerHTML=`<div class="mn">${m.name}</div><div class="ms">${sInfo} · Score ${m.score}/100</div><span class="mb ${bc}">${m.status}</span>`;
+    d.onclick=()=>selectMoku(m.id);
+    list.appendChild(d);
+  });
+}
+
+function buildCompare(idata){
+  const body=document.getElementById('comp-body');
+  body.innerHTML='';
+  document.getElementById('comp-sub').textContent=`Ke Kaiapuni · ${idata.name}`;
+  idata.moku.forEach(m=>{
+    const c=document.createElement('div');
+    c.className='cc'; c.dataset.moku=m.id;
+    c.innerHTML=`
+      <div class="cch"><div class="ccn">${m.name}</div><div class="ccs" style="color:${scoreColor(m.score)}">${m.score}</div></div>
+      <div class="ccg">
+        <div class="ccm"><div class="ccml">Rainfall</div><div class="ccmt"><div class="ccmf" style="background:#1ab4ff;width:${m.env.rain}%"></div></div></div>
+        <div class="ccm"><div class="ccml">Soil</div><div class="ccmt"><div class="ccmf" style="background:#c89b60;width:${m.env.soil}%"></div></div></div>
+        <div class="ccm"><div class="ccml">Canopy</div><div class="ccmt"><div class="ccmf" style="background:#4a9960;width:${m.env.canopy}%"></div></div></div>
+        <div class="ccm"><div class="ccml">Wauke potential</div><div class="ccmt"><div class="ccmf" style="background:${scoreColor(m.score)};width:${m.score}%"></div></div></div>
+      </div>
+      <div class="ccd">${m.desc}</div>`;
+    c.onclick=()=>{document.querySelectorAll('.cc').forEach(x=>x.classList.remove('on'));c.classList.add('on');selectMoku(m.id)};
+    body.appendChild(c);
+  });
+}
+
+function buildVarieties(){
+  const body=document.getElementById('var-body');
+  body.innerHTML='';
+  VARIETIES.forEach(v=>{
+    const c=document.createElement('div');
+    c.className='vc'; c.style.borderColor=v.border;
+    c.innerHTML=`
+      <div class="vcn" style="color:${v.color}">${v.name}</div>
+      <div class="vco">${v.olelo}</div>
+      <div class="vcd">${v.desc}</div>
+      <div class="vct">${v.traits.map(t=>`<span class="vcc" style="color:${v.color};border-color:${v.border};background:${v.bg}">${t}</span>`).join('')}</div>
+      <div class="gdiv"></div>
+      <div class="vcl">Known sites: ${v.locs.map(l=>`<span>${l}</span>`).join(' · ')}</div>`;
+    body.appendChild(c);
+  });
+}
+
+// ── RAINFALL ZONE BUILDER ──
+// Each island gets wet (>60in/yr, blue) and dry (<40in/yr, orange) polygon overlays
+// based on moku env.rain values. Rendered as semi-transparent fills.
+const RAIN_ZONES = {
+  oahu:{
+    wet:[  // windward / Ko'olauloa, Ko'olaupoko — high rain
+      [[21.700,-158.020],[21.688,-157.960],[21.672,-157.875],[21.650,-157.782],[21.622,-157.700],[21.598,-157.658],[21.570,-157.648],[21.548,-157.672],[21.535,-157.718],[21.528,-157.775],[21.538,-157.842],[21.552,-157.902],[21.564,-157.962],[21.570,-158.020],[21.700,-158.020]],
+      [[21.528,-157.775],[21.524,-157.768],[21.512,-157.758],[21.496,-157.745],[21.480,-157.738],[21.464,-157.734],[21.446,-157.730],[21.430,-157.722],[21.414,-157.712],[21.398,-157.700],[21.382,-157.690],[21.366,-157.684],[21.350,-157.688],[21.334,-157.704],[21.320,-157.724],[21.310,-157.760],[21.298,-157.800],[21.314,-157.805],[21.380,-157.810],[21.386,-157.818],[21.390,-157.840],[21.390,-157.886],[21.388,-157.908],[21.384,-157.926],[21.392,-157.975],[21.402,-157.985],[21.422,-157.988],[21.462,-157.996],[21.478,-158.012],[21.492,-158.042],[21.498,-158.075],[21.502,-158.032],[21.512,-157.992],[21.526,-157.960],[21.538,-157.920],[21.528,-157.775]]
+    ],
+    dry:[  // leeward / Wai'anae, 'Ewa — low rain
+      [[21.574,-158.278],[21.578,-158.262],[21.604,-158.245],[21.638,-158.228],[21.668,-158.205],[21.700,-158.180],[21.700,-158.340],[21.540,-158.340],[21.428,-158.268],[21.385,-158.205],[21.366,-158.162],[21.348,-158.128],[21.338,-158.118],[21.358,-158.082],[21.376,-158.052],[21.392,-158.022],[21.412,-158.002],[21.438,-157.992],[21.462,-157.996],[21.442,-157.990],[21.422,-157.988],[21.402,-157.985],[21.392,-157.975],[21.388,-157.955],[21.384,-157.926],[21.388,-157.908],[21.390,-157.886],[21.390,-157.862],[21.390,-157.840],[21.386,-157.818],[21.380,-157.810],[21.372,-157.806],[21.360,-157.806],[21.346,-157.808],[21.330,-157.808],[21.310,-157.852],[21.292,-157.868],[21.282,-157.895],[21.280,-157.928],[21.282,-157.965],[21.290,-158.002],[21.300,-158.042],[21.318,-158.082],[21.338,-158.118],[21.574,-158.278]]
+    ]
+  },
+  maui:{
+    wet:[[[20.96,-156.14],[20.98,-156.04],[20.98,-155.96],[20.94,-155.92],[20.90,-155.92],[20.86,-155.96],[20.84,-156.04],[20.84,-156.14],[20.88,-156.12],[20.92,-156.10],[20.96,-156.14]],[[20.80,-155.86],[20.82,-155.78],[20.80,-155.72],[20.76,-155.70],[20.72,-155.72],[20.70,-155.78],[20.70,-155.86],[20.74,-155.90],[20.78,-155.90],[20.80,-155.86]]],
+    dry:[[[20.90,-156.70],[20.90,-156.55],[20.82,-156.50],[20.76,-156.52],[20.70,-156.55],[20.68,-156.65],[20.72,-156.72],[20.80,-156.74],[20.88,-156.72],[20.90,-156.70]],[[20.70,-155.86],[20.70,-155.78],[20.68,-155.74],[20.64,-155.74],[20.62,-155.80],[20.62,-155.88],[20.66,-155.92],[20.70,-155.92],[20.70,-155.86]]]
+  },
+  hawaii:{
+    wet:[[[20.18,-155.65],[20.18,-155.22],[20.00,-155.12],[19.90,-155.12],[19.82,-155.24],[19.82,-155.45],[19.90,-155.60],[20.00,-155.68],[20.10,-155.68],[20.18,-155.65]],[[19.82,-154.98],[19.78,-154.94],[19.72,-154.92],[19.68,-154.96],[19.66,-155.06],[19.68,-155.16],[19.74,-155.22],[19.78,-155.18],[19.76,-155.08],[19.78,-155.00],[19.82,-154.98]]],
+    dry:[[[19.82,-155.90],[19.82,-155.70],[19.72,-155.60],[19.62,-155.60],[19.52,-155.68],[19.52,-155.90],[19.60,-155.96],[19.70,-156.00],[19.76,-155.98],[19.82,-155.90]],[[20.02,-155.78],[20.00,-155.68],[19.90,-155.60],[19.82,-155.45],[19.82,-155.70],[19.88,-155.80],[19.96,-155.84],[20.00,-155.82],[20.02,-155.78]]]
+  },
+  kauai:{
+    wet:[[[22.26,-159.50],[22.24,-159.38],[22.20,-159.30],[22.16,-159.26],[22.12,-159.28],[22.08,-159.36],[22.06,-159.44],[22.10,-159.46],[22.14,-159.40],[22.18,-159.38],[22.22,-159.42],[22.26,-159.50]],[[22.26,-159.62],[22.26,-159.50],[22.22,-159.42],[22.18,-159.38],[22.14,-159.40],[22.10,-159.46],[22.10,-159.56],[22.14,-159.62],[22.20,-159.66],[22.26,-159.62]]],
+    dry:[[[21.96,-159.56],[21.96,-159.44],[21.96,-159.32],[21.98,-159.26],[22.04,-159.24],[22.02,-159.18],[21.96,-159.18],[21.90,-159.22],[21.88,-159.30],[21.88,-159.42],[21.90,-159.50],[21.94,-159.56],[21.96,-159.56]]]
+  },
+  molokai:{
+    wet:[[[21.22,-156.72],[21.22,-156.60],[21.16,-156.56],[21.10,-156.56],[21.06,-156.62],[21.06,-156.72],[21.10,-156.78],[21.16,-156.78],[21.22,-156.72]]],
+    dry:[[[21.22,-157.28],[21.22,-157.12],[21.16,-157.14],[21.12,-157.10],[21.08,-157.02],[21.06,-156.92],[21.04,-157.00],[21.04,-157.12],[21.06,-157.22],[21.10,-157.28],[21.16,-157.30],[21.22,-157.28]]]
+  }
+};
+
+function buildRainZones(islandId){
+  rainLG.clearLayers();
+  const z = RAIN_ZONES[islandId];
+  if(!z) return;
+  // Wet zones — blue teal glow, wauke-favorable
+  (z.wet||[]).forEach(coords=>{
+    const p = L.polygon(coords,{
+      fillColor:'rgba(0,180,255,0.18)', fillOpacity:1,
+      color:'rgba(0,200,255,0.55)', weight:1.2, dashArray:'4,3'
+    });
+    p.bindTooltip('<span style="color:#1ab4ff">Wet zone · Ka ua</span><br><span style="font-size:8px;color:rgba(120,180,220,0.8)">60+ in/yr · Favorable for wauke<br>Windward / high-rainfall corridor</span>',{sticky:true,opacity:0.95});
+    rainLG.addLayer(p);
+  });
+  // Dry zones — amber, wauke needs irrigation
+  (z.dry||[]).forEach(coords=>{
+    const p = L.polygon(coords,{
+      fillColor:'rgba(220,140,0,0.12)', fillOpacity:1,
+      color:'rgba(255,170,0,0.45)', weight:1.2, dashArray:'4,3'
+    });
+    p.bindTooltip('<span style="color:#ffb830">Dry zone · Ka wela</span><br><span style="font-size:8px;color:rgba(200,170,120,0.8)">Under 40 in/yr · Challenging for wauke<br>Leeward · Irrigation needed</span>',{sticky:true,opacity:0.95});
+    rainLG.addLayer(p);
+  });
+}
+
+function showDetail(id,idata){
+  const s=idata.sites.find(x=>x.id===id);
+  if(!s) return;
+  const moku=(idata.moku.find(m=>m.id===s.moku)||{}).name||'';
+  document.getElementById('dn').textContent=s.name;
+  document.getElementById('ds').textContent=moku+' · '+(s.type==='bamboo'?'Bamboo · ʻOhe Kapala':'Wauke · '+s.status);
+
+  const isB=s.type==='bamboo';
+  const tc=isB?'var(--bamboo)':s.status==='active'?'var(--green)':s.status==='study'?'var(--pink)':'var(--teal)';
+  const tbg=isB?'rgba(126,203,53,0.08)':s.status==='active'?'rgba(57,255,154,0.08)':s.status==='study'?'rgba(224,65,138,0.08)':'rgba(0,229,200,0.07)';
+  const tb=isB?'rgba(126,203,53,0.25)':s.status==='active'?'rgba(57,255,154,0.28)':s.status==='study'?'rgba(224,65,138,0.25)':'rgba(0,229,200,0.22)';
+
+  const varChips=(!isB&&s.varieties)?s.varieties.map(vid=>{const v=VARIETIES.find(x=>x.id===vid);return v?`<span class="vchip" style="color:${v.color};border-color:${v.border};background:${v.bg}">${v.name}</span>`:''}).join(''):'';
+
+  document.getElementById('db').innerHTML=`
+    <span class="stag" style="color:${tc};background:${tbg};border-color:${tb}">${isB?'BAMBOO · ʻOHE KAPALA':s.status.toUpperCase()+(s.acres?' · '+s.acres+' ACRE':'')}</span>
+    <div class="sl" style="margin-bottom:9px">Ke Kaiapuni · Ecological Conditions</div>
+    <div class="eb"><div class="el">Rainfall · Ua</div><div class="et"><div class="ef" style="background:#1ab4ff;width:0%" data-w="${s.env.rain}%"></div></div><div class="ev">${s.env.rain} in/yr</div></div>
+    <div class="eb"><div class="el">Soil suitability · Kumu ʻāina</div><div class="et"><div class="ef" style="background:#c89b60;width:0%" data-w="${s.env.soil}%"></div></div><div class="ev">${s.env.soil}% suitability</div></div>
+    <div class="eb"><div class="el">Canopy cover · Lauoho</div><div class="et"><div class="ef" style="background:#4a9960;width:0%" data-w="${s.env.canopy}%"></div></div><div class="ev">${s.env.canopy}%</div></div>
+    <div class="eb"><div class="el">Elevation · Kiʻekiʻe</div><div class="et"><div class="ef" style="background:#8880c0;width:0%" data-w="${Math.min(s.env.elev/30,100)}%"></div></div><div class="ev">${s.env.elev.toLocaleString()} ft</div></div>
+    <div class="gdiv"></div>
+    ${!isB?`
+    <div class="sl" style="margin-bottom:7px">Hiki Ulu · Wauke Propagation</div>
+    ${s.prop?`<div class="pbox"><div class="pn2">${s.prop.toLocaleString()}</div><div class="pu">plants / year (est.)</div><div class="pnote">${s.propNote}</div></div>`:`<div class="nbox" style="border-color:rgba(224,65,138,0.2);background:rgba(224,65,138,0.04);margin-bottom:11px"><div class="ntxt" style="color:var(--pink)">${s.propNote}</div></div>`}
+    <div class="sl" style="margin-bottom:6px">Nā ʻAno · Wauke Varieties</div>
+    <div style="margin-bottom:11px">${varChips||'<span style="font-size:9px;color:var(--dim)">Variety not yet documented</span>'}</div>
+    `:`<div class="sl" style="margin-bottom:7px">ʻOhe Kapala · Bamboo Use in Kapa</div>
+    <div class="nbox" style="border-color:rgba(126,203,53,0.2);background:rgba(126,203,53,0.04);margin-bottom:11px"><div class="ntxt" style="color:var(--bamboo)">Bamboo is carved into ʻohe kapala — the stamp tools used to apply geometric patterns to finished kapa. Practitioners source bamboo nodes for carving intricate designs.</div></div>`}
+    <div class="sl" style="margin-bottom:6px">Kilo ʻĀina · Notes</div>
+    <div class="nbox" style="border-color:rgba(0,229,200,0.12);background:rgba(0,229,200,0.03)"><div class="ntxt">${s.notes}</div></div>
+    ${s.contact?`<div style="font-size:8.5px;color:var(--dim);margin-top:8px;letter-spacing:0.04em">Contact: <span style="color:var(--teal)">${s.contact}</span></div>`:''}`;
+
+  setTimeout(()=>document.querySelectorAll('#db .ef').forEach(b=>b.style.width=b.dataset.w),60);
+}
+
+function selectMoku(id){
+  document.querySelectorAll('.mi').forEach(x=>x.classList.remove('on'));
+  const item=document.getElementById('mi-'+id);
+  if(item){item.classList.add('on');item.scrollIntoView({block:'nearest',behavior:'smooth'})}
+  if(mokuPolys[id]){map.flyToBounds(mokuPolys[id].getBounds(),{padding:[28,28],duration:1.0,maxZoom:13})}
+}
+
+function switchIsland(id,btn){
+  activeIsland=id;
+  document.querySelectorAll('.ibt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const idata=ISLANDS[id];
+  buildPolys(idata); buildMarkers(idata);
+  buildMokuList(idata); buildCompare(idata);
+  buildRainZones(id);
+  if(lState.rain){ rainLG.addTo(map); } else { map.removeLayer(rainLG); }
+  const rl=document.getElementById('leg-rain');
+  if(rl) rl.style.display=lState.rain?'block':'none';
+  map.flyTo(idata.center,idata.zoom,{duration:1.4});
+  document.getElementById('dn').textContent='Select a site';
+  document.getElementById('ds').textContent='Click a marker or moku to explore';
+  document.getElementById('db').innerHTML='<div class="empty"><div class="ei">◎</div><div class="et2">Click any glowing site<br>on the map to view<br>cultivation data</div></div>';
+}
+
+function switchTab(name,e){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  e.target.classList.add('active');
+  document.querySelectorAll('.vp').forEach(p=>p.classList.remove('on'));
+  document.getElementById('view-'+name).classList.add('on');
+}
+
+function toggleLayer(name,row){
+  lState[name]=!lState[name];
+  document.getElementById('ld-'+name).classList.toggle('off',!lState[name]);
+  if(name==='wauke') lState.wauke?waukeLG.addTo(map):map.removeLayer(waukeLG);
+  else if(name==='bamboo') lState.bamboo?bambooLG.addTo(map):map.removeLayer(bambooLG);
+  else if(name==='moku') lState.moku?mokuLG.addTo(map):map.removeLayer(mokuLG);
+  else if(name==='rain'){
+    lState.rain?rainLG.addTo(map):map.removeLayer(rainLG);
+    const rl = document.getElementById('leg-rain');
+    if(rl) rl.style.display = lState.rain?'block':'none';
+  }
+}
+
+// Init Oahu
+buildPolys(ISLANDS.oahu);
+buildMarkers(ISLANDS.oahu);
+buildMokuList(ISLANDS.oahu);
+buildCompare(ISLANDS.oahu);
+buildVarieties();
+buildRainZones('oahu');
+
+</script>
+</body>
+</html>
