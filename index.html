@@ -272,7 +272,7 @@ header{
   #mc{grid-column:1;grid-row:1}
   .sl-toggle{display:none}
 
-  #leg-plants{bottom:60px!important;left:8px!important}
+  #leg-wrap{bottom:60px!important;left:8px!important}
   #leg-moku{display:none!important}
   #leg-rain{display:none!important}
 
@@ -356,60 +356,62 @@ header{
     <div id="map"></div>
     <button class="sl-toggle" id="sl-toggle" onclick="toggleSidebar()" title="Toggle layers panel">‹</button>
 
-    <!-- LEGEND PANEL 1: Always visible — Plant cultivation sites -->
-    <div id="leg-plants" style="position:absolute;bottom:16px;left:13px;z-index:500;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;min-width:200px">
-      <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Cultivation Sites</div>
-      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);margin-bottom:5px">Wauke · Bamboo · Future plants</div>
-      <div class="li" style="margin-bottom:2px">
-        <div class="ld2" style="background:var(--green);box-shadow:0 0 5px var(--green)"></div>
-        <div><div style="color:var(--green);font-size:9.5px;font-weight:500">Active cultivation</div><div style="font-size:9px;color:var(--dim)">Harvesting underway</div></div>
-      </div>
-      <div class="li" style="margin-bottom:2px">
-        <div class="ld2" style="background:var(--teal);box-shadow:0 0 4px var(--teal)"></div>
-        <div><div style="color:var(--teal);font-size:9.5px;font-weight:500">Potential site</div><div style="font-size:9px;color:var(--dim)">Conditions confirmed suitable</div></div>
-      </div>
-      <div class="li" style="margin-bottom:2px">
-        <div class="ld2" style="background:var(--pink);box-shadow:0 0 4px var(--pink)"></div>
-        <div><div style="color:var(--pink);font-size:9.5px;font-weight:500">Study / research</div><div style="font-size:9px;color:var(--dim)">Survey in progress</div></div>
-      </div>
-      <div class="li" style="margin-top:4px;padding-top:6px;border-top:1px solid var(--border)">
-        <div class="ld2" style="background:var(--bamboo);box-shadow:0 0 5px var(--bamboo)"></div>
-        <div><div style="color:var(--bamboo);font-size:9.5px;font-weight:500">Bamboo (ʻOhe)</div><div style="font-size:9px;color:var(--dim)">ʻOhe kapala source</div></div>
-      </div>
-    </div>
+    <!-- LEGEND PANELS — flex row, auto-spaced, no hardcoded positions -->
+    <div id="leg-wrap" style="position:absolute;bottom:16px;left:13px;z-index:500;display:flex;gap:8px;align-items:flex-end">
 
-    <!-- LEGEND PANEL 2: Always visible — Moku district borders -->
-    <div id="leg-moku" style="position:absolute;bottom:16px;left:228px;z-index:500;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;min-width:180px">
-      <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Moku Districts</div>
-      <div class="li" style="margin-bottom:4px">
-        <div style="width:24px;height:3px;background:rgba(0,229,200,0.58);border-radius:2px;flex-shrink:0"></div>
-        <div><div style="font-size:9.5px;color:var(--bright)">Active moku</div><div style="font-size:9px;color:var(--dim)">Current cultivation</div></div>
+      <div id="leg-plants" style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;min-width:200px">
+        <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Cultivation Sites</div>
+        <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);margin-bottom:5px">Wauke · Bamboo · Future plants</div>
+        <div class="li" style="margin-bottom:2px">
+          <div class="ld2" style="background:var(--green);box-shadow:0 0 5px var(--green)"></div>
+          <div><div style="color:var(--green);font-size:9.5px;font-weight:500">Active cultivation</div><div style="font-size:9px;color:var(--dim)">Harvesting underway</div></div>
+        </div>
+        <div class="li" style="margin-bottom:2px">
+          <div class="ld2" style="background:var(--teal);box-shadow:0 0 4px var(--teal)"></div>
+          <div><div style="color:var(--teal);font-size:9.5px;font-weight:500">Potential site</div><div style="font-size:9px;color:var(--dim)">Conditions confirmed suitable</div></div>
+        </div>
+        <div class="li" style="margin-bottom:2px">
+          <div class="ld2" style="background:var(--pink);box-shadow:0 0 4px var(--pink)"></div>
+          <div><div style="color:var(--pink);font-size:9.5px;font-weight:500">Study / research</div><div style="font-size:9px;color:var(--dim)">Survey in progress</div></div>
+        </div>
+        <div class="li" style="margin-top:4px;padding-top:6px;border-top:1px solid var(--border)">
+          <div class="ld2" style="background:var(--bamboo);box-shadow:0 0 5px var(--bamboo)"></div>
+          <div><div style="color:var(--bamboo);font-size:9.5px;font-weight:500">Bamboo (ʻOhe)</div><div style="font-size:9px;color:var(--dim)">ʻOhe kapala source</div></div>
+        </div>
       </div>
-      <div class="li" style="margin-bottom:4px">
-        <div style="width:24px;height:0;border-top:2px dashed rgba(26,180,255,0.55);flex-shrink:0"></div>
-        <div><div style="font-size:9.5px;color:var(--bright)">Potential</div><div style="font-size:9px;color:var(--dim)">Conditions confirmed suitable</div></div>
-      </div>
-      <div class="li">
-        <div style="width:24px;height:0;border-top:2px dashed rgba(224,65,138,0.6);flex-shrink:0"></div>
-        <div><div style="font-size:9.5px;color:var(--bright)">Study / research</div><div style="font-size:9px;color:var(--dim)">Survey in progress</div></div>
-      </div>
-    </div>
 
-    <!-- LEGEND PANEL 3: Only shown when rainfall layer is ON -->
-    <div id="leg-rain" style="position:absolute;bottom:16px;left:423px;z-index:500;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;min-width:190px;display:none">
-      <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(26,180,255,0.2)">Rainfall Zones</div>
-      <div class="li" style="margin-bottom:3px">
-        <div style="width:20px;height:10px;border:1.5px dashed rgba(26,180,255,0.55);background:rgba(26,180,255,0.18);border-radius:2px;flex-shrink:0"></div>
-        <div><div style="color:#1ab4ff;font-size:9.5px;font-weight:500">Wet · Ka ua</div><div style="font-size:9px;color:var(--dim)">65+ in/yr · wauke-favorable</div></div>
+      <div id="leg-moku" style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;min-width:180px">
+        <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Moku Districts</div>
+        <div class="li" style="margin-bottom:4px">
+          <div style="width:24px;height:3px;background:rgba(0,229,200,0.58);border-radius:2px;flex-shrink:0"></div>
+          <div><div style="font-size:9.5px;color:var(--bright)">Active moku</div><div style="font-size:9px;color:var(--dim)">Current cultivation</div></div>
+        </div>
+        <div class="li" style="margin-bottom:4px">
+          <div style="width:24px;height:0;border-top:2px dashed rgba(26,180,255,0.55);flex-shrink:0"></div>
+          <div><div style="font-size:9.5px;color:var(--bright)">Potential</div><div style="font-size:9px;color:var(--dim)">Conditions confirmed suitable</div></div>
+        </div>
+        <div class="li">
+          <div style="width:24px;height:0;border-top:2px dashed rgba(224,65,138,0.6);flex-shrink:0"></div>
+          <div><div style="font-size:9.5px;color:var(--bright)">Study / research</div><div style="font-size:9px;color:var(--dim)">Survey in progress</div></div>
+        </div>
       </div>
-      <div class="li" style="margin-bottom:3px">
-        <div style="width:20px;height:10px;border:1.5px dashed rgba(100,195,120,0.45);background:rgba(100,195,120,0.14);border-radius:2px;flex-shrink:0"></div>
-        <div><div style="color:#64c378;font-size:9.5px;font-weight:500">Moderate · Ka waena</div><div style="font-size:9px;color:var(--dim)">41–64 in/yr · seasonal variation</div></div>
+
+      <div id="leg-rain" style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;min-width:190px;display:none">
+        <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(26,180,255,0.2)">Rainfall Zones</div>
+        <div class="li" style="margin-bottom:3px">
+          <div style="width:20px;height:10px;border:1.5px dashed rgba(26,180,255,0.55);background:rgba(26,180,255,0.18);border-radius:2px;flex-shrink:0"></div>
+          <div><div style="color:#1ab4ff;font-size:9.5px;font-weight:500">Wet · Ka ua</div><div style="font-size:9px;color:var(--dim)">65+ in/yr · wauke-favorable</div></div>
+        </div>
+        <div class="li" style="margin-bottom:3px">
+          <div style="width:20px;height:10px;border:1.5px dashed rgba(100,195,120,0.45);background:rgba(100,195,120,0.14);border-radius:2px;flex-shrink:0"></div>
+          <div><div style="color:#64c378;font-size:9.5px;font-weight:500">Moderate · Ka waena</div><div style="font-size:9px;color:var(--dim)">41–64 in/yr · seasonal variation</div></div>
+        </div>
+        <div class="li">
+          <div style="width:20px;height:10px;border:1.5px dashed rgba(255,170,0,0.55);background:rgba(220,140,0,0.16);border-radius:2px;flex-shrink:0"></div>
+          <div><div style="color:#ffb830;font-size:9.5px;font-weight:500">Dry · Ka wela</div><div style="font-size:9px;color:var(--dim)">&lt;40 in/yr · irrigation needed</div></div>
+        </div>
       </div>
-      <div class="li">
-        <div style="width:20px;height:10px;border:1.5px dashed rgba(255,170,0,0.55);background:rgba(220,140,0,0.16);border-radius:2px;flex-shrink:0"></div>
-        <div><div style="color:#ffb830;font-size:9.5px;font-weight:500">Dry · Ka wela</div><div style="font-size:9px;color:var(--dim)">&lt;40 in/yr · irrigation needed</div></div>
-      </div>
+
     </div>
   </div>
 
