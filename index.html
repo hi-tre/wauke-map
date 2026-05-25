@@ -1099,10 +1099,10 @@ const ISLANDS = {
 // ══════════════════════════════════════════
 const map = L.map('map',{center:[21.46,-157.99],zoom:11,zoomControl:true,attributionControl:true});
 
-// Base: Stadia Alidade Smooth Dark — clean, low-noise, designed for data overlays
-const stadiaBase = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',{
-  attribution:'© <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> © <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  maxZoom:20, opacity:1
+// Base: CartoDB Dark Matter — free, no API key, dark neutral for data overlays
+const stadiaBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains:'abcd', maxZoom:20, opacity:1
 });
 stadiaBase.addTo(map);
 

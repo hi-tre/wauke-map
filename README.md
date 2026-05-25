@@ -45,7 +45,7 @@ wauke-project/
 All dependencies load via CDN:
 - **Leaflet.js 1.9.4** — interactive mapping
 - **Google Fonts** — Fraunces (display) + DM Mono (body)
-- **Basemap** — Stadia Alidade Smooth Dark + ESRI World Hillshade overlay
+- **Basemap** — CartoDB Dark Matter + ESRI World Hillshade overlay
 
 ---
 
