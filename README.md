@@ -1,6 +1,8 @@
 # Wauke · Nā Wahi Ulu
 ### Kapa Practitioner Map — Living Map of Hawaiʻi
 
+**[→ Open live map](https://hi-tre.github.io/wauke-map/)**
+
 An interactive mapping dashboard tracing where wauke (paper mulberry / *Broussonetia papyrifera*) is currently cultivated across the Hawaiian Islands, visualizing ecological conditions and potential outputs of expanded propagation — design as a tool for cultural restoration.
 
 ---
@@ -43,7 +45,7 @@ wauke-project/
 All dependencies load via CDN:
 - **Leaflet.js 1.9.4** — interactive mapping
 - **Google Fonts** — Fraunces (display) + DM Mono (body)
-- **Basemap** — CARTO Dark Matter (with OSM fallback)
+- **Basemap** — Stadia Alidade Smooth Dark + ESRI World Hillshade overlay
 
 ---
 
@@ -65,7 +67,7 @@ All cultivation sites are based on documented public sources:
 - Puʻuhonua o Hōnaunau NHP (Hawaiʻi)
 - Hanalei Valley (Kauaʻi), Hālawa Valley (Molokaʻi)
 
-Moku boundary polygons are approximated from the 1902 Hawaii Territory Survey (Walter E. Wall, Surveyor) and modern reference maps.
+Moku boundary polygons sourced from the State of Hawaiʻi Office of Planning GIS dataset (`geodata.hawaii.gov`), Douglas-Peucker simplified for web performance. All 30 moku across 5 islands use surveyed official boundaries.
 
 Wauke variety information sourced from:
 - Maui Nui Botanical Gardens ethnobotany records
@@ -77,7 +79,7 @@ Wauke variety information sourced from:
 
 ## Next Development Steps
 
-- [ ] Replace approximate moku polygons with official DHHL/State GIS GeoJSON
+- [x] Replace approximate moku polygons with official State GIS GeoJSON
 - [ ] Connect to live cultivation data via API
 - [ ] Add propagation model (interactive acreage calculator)
 - [ ] Add more plant layers (māmaki, ʻolonā, other kapa-adjacent species)
