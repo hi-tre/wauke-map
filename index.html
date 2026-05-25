@@ -263,8 +263,7 @@ header{
     transition:transform 0.32s cubic-bezier(.4,0,.2,1);
   }
   #pr.mobile-open{transform:translateY(0)}
-  #pr{position:fixed}
-  #pr-close{display:block!important}
+  #pr-close{display:flex!important;align-items:center;justify-content:center;width:32px;height:32px}
   #pr::before{
     content:'';display:block;width:32px;height:3px;
     background:rgba(175,210,240,0.18);border-radius:2px;
@@ -421,7 +420,7 @@ header{
   <div id="pr">
 
     <!-- Mobile close handle -->
-    <button id="pr-close" onclick="closeMobileDrawers()" style="display:none;position:absolute;top:10px;right:14px;z-index:10;background:none;border:none;color:var(--mid);font-size:18px;line-height:1;cursor:pointer;padding:4px 6px;font-family:'DM Mono',monospace">✕</button>
+    <button id="pr-close" onclick="closeMobileDrawers()" style="display:none;position:absolute;top:8px;right:12px;z-index:10;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:6px;color:var(--mid);font-size:14px;cursor:pointer;font-family:'DM Mono',monospace">✕</button>
 
     <!-- MAP DETAIL -->
     <div id="view-map" class="vp on">
@@ -499,7 +498,7 @@ header{
 </div>
 
 <!-- MOBILE: overlay tap-to-close and bottom bar -->
-<div class="mob-overlay" id="mob-overlay" onclick="closeMobilePanels()"></div>
+<div class="mob-overlay" id="mob-overlay" onclick="closeMobileDrawers()"></div>
 <div class="mob-bar">
   <button class="mob-btn" id="mob-layers-btn" onclick="toggleMobilePanel('sl')">Layers + Sites</button>
   <button class="mob-btn" id="mob-detail-btn" onclick="toggleMobilePanel('pr')">Detail View</button>
@@ -1533,6 +1532,9 @@ buildCompare(ISLANDS.oahu);
 buildVarieties();
 buildRainZones('oahu');
 initFromURL();
+if(window.innerWidth<=768 && mokuLG.getLayers().length){
+  map.fitBounds(mokuLG.getBounds(),{padding:[28,28],maxZoom:11});
+}
 
 </script>
 </body>
