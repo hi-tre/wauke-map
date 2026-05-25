@@ -263,6 +263,8 @@ header{
     transition:transform 0.32s cubic-bezier(.4,0,.2,1);
   }
   #pr.mobile-open{transform:translateY(0)}
+  #pr{position:fixed}
+  #pr-close{display:block!important}
   #pr::before{
     content:'';display:block;width:32px;height:3px;
     background:rgba(175,210,240,0.18);border-radius:2px;
@@ -417,6 +419,9 @@ header{
 
   <!-- RIGHT PANEL -->
   <div id="pr">
+
+    <!-- Mobile close handle -->
+    <button id="pr-close" onclick="closeMobileDrawers()" style="display:none;position:absolute;top:10px;right:14px;z-index:10;background:none;border:none;color:var(--mid);font-size:18px;line-height:1;cursor:pointer;padding:4px 6px;font-family:'DM Mono',monospace">✕</button>
 
     <!-- MAP DETAIL -->
     <div id="view-map" class="vp on">
@@ -1403,7 +1408,11 @@ function switchIsland(id,btn){
   if(lState.rain){ rainLG.addTo(map); } else { map.removeLayer(rainLG); }
   const rl=document.getElementById('leg-rain');
   if(rl) rl.style.display=lState.rain?'block':'none';
-  map.flyTo(idata.center,idata.zoom,{duration:1.4});
+  if(window.innerWidth<=768 && mokuLG.getLayers().length){
+    map.flyToBounds(mokuLG.getBounds(),{padding:[24,24],duration:1.2,maxZoom:12});
+  } else {
+    map.flyTo(idata.center,idata.zoom,{duration:1.4});
+  }
   document.getElementById('dn').textContent='Select a site';
   document.getElementById('ds').textContent='Click a marker or moku to explore';
   document.getElementById('db').innerHTML='<div class="empty"><div class="ei">◎</div><div class="et2">Click any glowing site<br>on the map to view<br>cultivation data</div></div>';
@@ -1411,6 +1420,11 @@ function switchIsland(id,btn){
 }
 
 function switchTab(name,e){
+  const wasActive = e.target.classList.contains('active');
+  if(window.innerWidth<=768 && wasActive && name!=='map'){
+    closeMobileDrawers();
+    return;
+  }
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   e.target.classList.add('active');
   document.querySelectorAll('.vp').forEach(p=>p.classList.remove('on'));
@@ -1455,6 +1469,12 @@ function closeMobileDrawers(){
   document.getElementById('mob-overlay').classList.remove('on');
   document.getElementById('mob-layers-btn').classList.remove('active');
   document.getElementById('mob-detail-btn').classList.remove('active');
+  // Snap tabs back to Map
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const mapTab = document.querySelector('.tab[onclick*="\'map\'"]');
+  if(mapTab) mapTab.classList.add('active');
+  document.querySelectorAll('.vp').forEach(p=>p.classList.remove('on'));
+  document.getElementById('view-map').classList.add('on');
 }
 
 function toggleMobilePanel(id){
@@ -1488,7 +1508,11 @@ function initFromURL(){
   buildMokuList(idata); buildCompare(idata);
   buildRainZones(island);
   if(lState.rain){ rainLG.addTo(map); } else { map.removeLayer(rainLG); }
-  map.setView(idata.center,idata.zoom);
+  if(window.innerWidth<=768 && mokuLG.getLayers().length){
+    map.fitBounds(mokuLG.getBounds(),{padding:[24,24],maxZoom:12});
+  } else {
+    map.setView(idata.center,idata.zoom);
+  }
 
   if(site){
     const s=idata.sites.find(x=>x.id===site);
