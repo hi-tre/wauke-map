@@ -550,7 +550,7 @@ const OAHU_MOKU = [
         [21.62628,-157.92107],[21.64653,-157.91826],[21.64846,-157.91221],[21.65229,-157.92732],
         [21.66089,-157.92709],[21.66788,-157.93674],[21.6738,-157.93286],[21.70943,-157.96605]
       ]},
-      {id:'waialua',name:"Waialua",status:'potential',score:60,env:{rain:45,soil:65,canopy:22,elev:220},
+      {id:'waialua',name:"Waialua",status:'potential',score:60,env:{rain:35,soil:65,canopy:22,elev:220},
        desc:"North shore plains. Former sugar plantation land. Good soil depth along Waimea/Anahulu streams. Medium propagation potential — water access key.",
        poly:[
         [21.63422,-158.06395],[21.63784,-158.06881],[21.62546,-158.07681],[21.60299,-158.10773],
@@ -563,7 +563,7 @@ const OAHU_MOKU = [
         [21.55188,-157.91838],[21.56957,-157.93631],[21.58022,-157.94033],[21.59154,-157.95742],
         [21.58974,-157.96621],[21.59867,-157.9865],[21.60782,-157.99576],[21.62363,-158.02798]
       ]},
-      {id:'waianae',name:"Waiʻanae",status:'active',score:72,env:{rain:58,soil:72,canopy:38,elev:850},
+      {id:'waianae',name:"Waiʻanae",status:'active',score:72,env:{rain:22,soil:72,canopy:38,elev:850},
        desc:"Leeward coast. Deep alluvial valley soils at Mākaha and Lualualei. Community-led wauke restoration since 2019. Drier conditions require valley placement.",
        poly:[
         [21.57431,-158.28023],[21.55565,-158.24855],[21.53688,-158.23162],[21.5218,-158.22841],
@@ -1165,11 +1165,13 @@ function buildPolys(idata){
     p.bindTooltip(m.name,{sticky:true,opacity:0.95});
     p.on('mouseover',function(){
       if(activeMokuId!==m.id){
+        if(lState.rain) return;
         this.setStyle({fillColor:MOKU_FILL_HV[m.status]||MOKU_FILL_HV.potential,weight:1.8});
       }
     });
     p.on('mouseout',function(){
       if(activeMokuId!==m.id){
+        if(lState.rain) return;
         this.setStyle({fillColor:MOKU_FILL[m.status]||MOKU_FILL.potential,weight:1.4});
       }
     });
@@ -1252,36 +1254,64 @@ function buildVarieties(){
   });
 }
 
-// ── RAINFALL ZONE BUILDER ──
-function buildRainZones(islandId){
-  rainLG.clearLayers();
-  const idata = ISLANDS[islandId];
+// ── RAINFALL ZONE HELPERS ──
+function rainColors(r){
+  if(r==null) r=50;
+  if(r>=65) return {fill:'rgba(26,180,255,0.22)',  stroke:'rgba(26,180,255,0.70)'};
+  if(r<=40)  return {fill:'rgba(220,140,0,0.18)',   stroke:'rgba(255,170,0,0.60)'};
+  return           {fill:'rgba(100,195,120,0.16)',  stroke:'rgba(100,195,120,0.55)'};
+}
+function rainColorsActive(r){
+  if(r==null) r=50;
+  if(r>=65) return {fill:'rgba(26,180,255,0.40)',  stroke:'rgba(26,180,255,0.95)'};
+  if(r<=40)  return {fill:'rgba(220,140,0,0.32)',   stroke:'rgba(255,170,0,0.92)'};
+  return           {fill:'rgba(100,195,120,0.30)',  stroke:'rgba(100,195,120,0.90)'};
+}
+function rainLabel(r){
+  if(r==null) r=50;
+  if(r>=65) return `<span style="color:#1ab4ff">Wet · Ka ua</span><br><span style="font-size:9px;color:rgba(120,180,220,0.8)">${r} in/yr · Favorable for wauke</span>`;
+  if(r<=40)  return `<span style="color:#ffb830">Dry · Ka wela</span><br><span style="font-size:9px;color:rgba(200,170,120,0.8)">${r} in/yr · Irrigation needed</span>`;
+  return           `<span style="color:#64c378">Moderate · Ka waena</span><br><span style="font-size:9px;color:rgba(140,200,150,0.8)">${r} in/yr · Seasonal variation</span>`;
+}
+
+function applyRainStyle(){
+  const idata = ISLANDS[activeIsland];
   if(!idata) return;
   (idata.moku||[]).forEach(m=>{
-    if(!m.poly||m.poly.length<3) return;
-    const r = (m.env&&m.env.rain!=null) ? m.env.rain : null;
+    const p = mokuPolys[m.id];
+    if(!p) return;
+    const r = m.env&&m.env.rain!=null ? m.env.rain : null;
     if(r===null) return;
-    let fillColor, strokeColor, label, labelSub;
-    if(r >= 65){
-      fillColor='rgba(26,180,255,0.18)'; strokeColor='rgba(26,180,255,0.55)';
-      label='<span style="color:#1ab4ff">Wet · Ka ua</span>';
-      labelSub=`${r} in/yr · Favorable for wauke`;
-    } else if(r <= 40){
-      fillColor='rgba(220,140,0,0.14)'; strokeColor='rgba(255,170,0,0.50)';
-      label='<span style="color:#ffb830">Dry · Ka wela</span>';
-      labelSub=`${r} in/yr · Irrigation needed`;
-    } else {
-      fillColor='rgba(100,195,120,0.12)'; strokeColor='rgba(100,195,120,0.40)';
-      label='<span style="color:#64c378">Moderate · Ka waena</span>';
-      labelSub=`${r} in/yr · Seasonal variation`;
-    }
-    const p = L.polygon(m.poly,{
-      fillColor, fillOpacity:1,
-      color:strokeColor, weight:1.2, dashArray:'4,3'
-    });
-    p.bindTooltip(`${label}<br><span style="font-size:9px;color:rgba(160,200,220,0.8)">${m.name} · ${labelSub}</span>`,{sticky:true,opacity:0.95});
-    rainLG.addLayer(p);
+    const isOn = activeMokuId===m.id;
+    const c = isOn ? rainColorsActive(r) : rainColors(r);
+    p.setStyle({fillColor:c.fill, fillOpacity:1, color:c.stroke, weight:isOn?2.2:1.4, dashArray:m.status==='active'?null:'5,4'});
+    p.unbindTooltip();
+    p.bindTooltip(rainLabel(r),{sticky:true,opacity:0.95});
   });
+}
+
+function restoreMokuStyle(){
+  const idata = ISLANDS[activeIsland];
+  if(!idata) return;
+  (idata.moku||[]).forEach(m=>{
+    const p = mokuPolys[m.id];
+    if(!p) return;
+    const isOn = activeMokuId===m.id;
+    p.setStyle({
+      fillColor: isOn ? MOKU_FILL_ON[m.status]||MOKU_FILL_ON.potential : MOKU_FILL[m.status]||MOKU_FILL.potential,
+      fillOpacity:1,
+      color: isOn ? MOKU_STR_ON[m.status]||MOKU_STR_ON.potential : MOKU_STROKE[m.status]||MOKU_STROKE.potential,
+      weight: isOn ? 2.2 : 1.4,
+      dashArray: m.status==='active' ? null : '5,4'
+    });
+    p.unbindTooltip();
+    p.bindTooltip(m.name,{sticky:true,opacity:0.95});
+  });
+}
+
+function buildRainZones(islandId){
+  rainLG.clearLayers();
+  if(lState.rain) applyRainStyle();
 }
 
 function showDetail(id,idata){
@@ -1329,11 +1359,14 @@ function selectMoku(id){
   // Reset previously active polygon
   if(activeMokuId && mokuPolys[activeMokuId]){
     const prev = idata.moku.find(m=>m.id===activeMokuId);
-    if(prev) mokuPolys[activeMokuId].setStyle({
-      fillColor:MOKU_FILL[prev.status]||MOKU_FILL.potential,
-      color:MOKU_STROKE[prev.status]||MOKU_STROKE.potential,
-      weight:1.4
-    });
+    if(prev){
+      if(lState.rain){
+        const c = rainColors(prev.env&&prev.env.rain);
+        mokuPolys[activeMokuId].setStyle({fillColor:c.fill, color:c.stroke, weight:1.4, dashArray:prev.status==='active'?null:'5,4'});
+      } else {
+        mokuPolys[activeMokuId].setStyle({fillColor:MOKU_FILL[prev.status]||MOKU_FILL.potential, color:MOKU_STROKE[prev.status]||MOKU_STROKE.potential, weight:1.4});
+      }
+    }
   }
 
   activeMokuId = id;
@@ -1341,12 +1374,14 @@ function selectMoku(id){
   // Highlight new active polygon
   if(mokuPolys[id]){
     const m = idata.moku.find(x=>x.id===id);
-    if(m) mokuPolys[id].setStyle({
-      fillColor:MOKU_FILL_ON[m.status]||MOKU_FILL_ON.potential,
-      color:MOKU_STR_ON[m.status]||MOKU_STR_ON.potential,
-      weight:2.2,
-      dashArray:null
-    });
+    if(m){
+      if(lState.rain){
+        const c = rainColorsActive(m.env&&m.env.rain);
+        mokuPolys[id].setStyle({fillColor:c.fill, color:c.stroke, weight:2.2, dashArray:null});
+      } else {
+        mokuPolys[id].setStyle({fillColor:MOKU_FILL_ON[m.status]||MOKU_FILL_ON.potential, color:MOKU_STR_ON[m.status]||MOKU_STR_ON.potential, weight:2.2, dashArray:null});
+      }
+    }
   }
 
   document.querySelectorAll('.mi').forEach(x=>x.classList.remove('on'));
@@ -1391,7 +1426,7 @@ function toggleLayer(name,row){
   else if(name==='bamboo') lState.bamboo?bambooLG.addTo(map):map.removeLayer(bambooLG);
   else if(name==='moku') lState.moku?mokuLG.addTo(map):map.removeLayer(mokuLG);
   else if(name==='rain'){
-    lState.rain?rainLG.addTo(map):map.removeLayer(rainLG);
+    if(lState.rain) applyRainStyle(); else restoreMokuStyle();
     const rl = document.getElementById('leg-rain');
     if(rl) rl.style.display = lState.rain?'block':'none';
   }
